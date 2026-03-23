@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bullini Causal Map — 엣지 추정 모듈 & 영향도 전파 상세</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1115;
+    --bg-secondary: #181b22;
+    --bg-tertiary: #1e222a;
+    --text: #cdd0d8;
+    --text-dim: #8b8f9a;
+    --accent: #5eaba2;
+    --accent-dim: #3d7a73;
+    --border: #2a2e38;
+    --code-bg: #13161c;
+    --high: #4ade80;
+    --medium: #fbbf24;
+    --low: #f87171;
+    --sidebar-width: 280px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 24px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    display: flex;
+  }
+
+  /* ─── Sidebar ─── */
+  #sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    overflow-y: auto;
+    z-index: 100;
+    transition: transform 0.3s ease;
+  }
+
+  #sidebar.collapsed {
+    transform: translateX(calc(-1 * var(--sidebar-width)));
+  }
+
+  #sidebar-toggle {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 110;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: left 0.3s ease;
+  }
+
+  #sidebar-toggle.shifted {
+    left: calc(var(--sidebar-width) + 12px);
+  }
+
+  .sidebar-title {
+    padding: 0 20px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+
+  .toc-list {
+    list-style: none;
+  }
+
+  .toc-list li a {
+    display: block;
+    padding: 8px 20px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 13px;
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .toc-list li a:hover,
+  .toc-list li a.active {
+    color: var(--accent);
+    background: rgba(94, 171, 162, 0.06);
+    border-left-color: var(--accent);
+  }
+
+  .toc-list li.toc-h3 a {
+    padding-left: 36px;
+    font-size: 12px;
+  }
+
+  /* ─── Main ─── */
+  #main {
+    margin-left: var(--sidebar-width);
+    max-width: 960px;
+    padding: 40px 48px 120px;
+    transition: margin-left 0.3s ease;
+  }
+
+  #main.expanded {
+    margin-left: 0;
+  }
+
+  h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--text-dim);
+    margin-bottom: 40px;
+  }
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 64px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent-dim);
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-top: 36px;
+    margin-bottom: 12px;
+  }
+
+  h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-top: 24px;
+    margin-bottom: 8px;
+  }
+
+  p { margin-bottom: 14px; }
+
+  /* ─── Tables ─── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+
+  th {
+    background: var(--bg-tertiary);
+    color: var(--accent);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+  }
+
+  td {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) td {
+    background: rgba(30, 34, 42, 0.5);
+  }
+
+  /* ─── Code ─── */
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    overflow-x: auto;
+    margin: 16px 0 24px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+    color: var(--text);
+  }
+
+  /* ─── Formula ─── */
+  .formula {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    padding: 16px 20px;
+    margin: 16px 0 24px;
+    border-radius: 0 8px 8px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: #e2e5eb;
+    overflow-x: auto;
+  }
+
+  /* ─── Mermaid ─── */
+  .mermaid {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 16px 0 24px;
+    text-align: center;
+  }
+
+  /* ─── Badge ─── */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-high { background: rgba(74,222,128,0.15); color: var(--high); }
+  .badge-medium { background: rgba(251,191,36,0.15); color: var(--medium); }
+  .badge-low { background: rgba(248,113,113,0.15); color: var(--low); }
+
+  /* ─── Callout ─── */
+  .callout {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    padding: 16px 20px;
+    margin: 16px 0 24px;
+    border-radius: 0 8px 8px 0;
+    font-size: 14px;
+  }
+
+  .callout-title {
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  /* ─── Mockup Panel ─── */
+  .mockup {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .mockup .chain-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .mockup .chain-label { color: var(--text); }
+  .mockup .chain-value { font-weight: 700; }
+  .mockup .positive { color: var(--high); }
+  .mockup .negative { color: var(--low); }
+  .mockup .total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0 0;
+    font-weight: 700;
+    color: #fff;
+    border-top: 2px solid var(--accent-dim);
+    margin-top: 8px;
+  }
+
+  ul, ol {
+    margin: 8px 0 16px 20px;
+    font-size: 14px;
+  }
+  li { margin-bottom: 4px; }
+
+  strong { color: #e2e5eb; }
+
+  .ref-list {
+    list-style: none;
+    margin-left: 0;
+  }
+  .ref-list li {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .ref-list li strong { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- Sidebar Toggle -->
+<button id="sidebar-toggle" class="shifted" onclick="toggleSidebar()">&#9776;</button>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="sidebar-title">목차</div>
+  <ul class="toc-list">
+    <li><a href="#sec1">1. 개요</a></li>
+    <li><a href="#sec2">2. Module A — Numeric→Numeric</a></li>
+    <li class="toc-h3"><a href="#sec2-stationarity">정상성 검정</a></li>
+    <li class="toc-h3"><a href="#sec2-lag">최적 시차 탐색</a></li>
+    <li class="toc-h3"><a href="#sec2-confidence">신뢰도 판정</a></li>
+    <li class="toc-h3"><a href="#sec2-example">Python 입출력 예시</a></li>
+    <li><a href="#sec3">3. Module B — Event→Numeric</a></li>
+    <li class="toc-h3"><a href="#sec3-event-study">Event Study</a></li>
+    <li class="toc-h3"><a href="#sec3-llm">LLM 분해 추정</a></li>
+    <li class="toc-h3"><a href="#sec3-confidence">신뢰도 판정</a></li>
+    <li><a href="#sec4">4. Module C — Event→Event</a></li>
+    <li class="toc-h3"><a href="#sec4-superforecaster">Superforecaster 프로토콜</a></li>
+    <li class="toc-h3"><a href="#sec4-bayesian">베이지안 업데이트</a></li>
+    <li class="toc-h3"><a href="#sec4-confidence">신뢰도 판정</a></li>
+    <li><a href="#sec5">5. Module D — Numeric→Event</a></li>
+    <li class="toc-h3"><a href="#sec5-threshold">Hard vs Soft Threshold</a></li>
+    <li class="toc-h3"><a href="#sec5-confidence">신뢰도 판정</a></li>
+    <li><a href="#sec6">6. 영향도 전파 & 합산</a></li>
+    <li class="toc-h3"><a href="#sec6-rules">전파 규칙</a></li>
+    <li class="toc-h3"><a href="#sec6-examples">전파 예시</a></li>
+    <li class="toc-h3"><a href="#sec6-dag">DAG 위상 정렬</a></li>
+    <li class="toc-h3"><a href="#sec6-aggregate">다중 체인 합산</a></li>
+    <li class="toc-h3"><a href="#sec6-uncertainty">불확실성 전파</a></li>
+    <li class="toc-h3"><a href="#sec6-time">시간 지연 필터링</a></li>
+    <li class="toc-h3"><a href="#sec6-ui">최종 UI 표시</a></li>
+    <li><a href="#sec7">7. 학술적 근거</a></li>
+  </ul>
+</nav>
+
+<!-- Main Content -->
+<main id="main">
+
+<h1>엣지 추정 모듈 & 영향도 전파 상세</h1>
+<p class="subtitle">Bullini Causal Map — 4가지 엣지 타입 추정 모듈 + 영향도 전파/합산 로직 기술 문서</p>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="sec1">1. 개요</h2>
+
+<p>
+  Bullini Causal Map은 경제 뉴스와 매크로 이벤트를 인과 그래프(DAG)로 구조화한다.
+  그래프의 노드는 <strong>이벤트(Event)</strong> 또는 <strong>수치(Numeric)</strong> 두 종류이며,
+  소스-타겟 노드 타입 조합에 따라 4가지 엣지 타입이 결정된다.
+</p>
+
+<h3>4가지 엣지 타입 요약</h3>
+<table>
+  <tr>
+    <th>엣지 타입</th>
+    <th>소스 → 타겟</th>
+    <th>핵심 파라미터</th>
+    <th>추정 방법</th>
+    <th>Module</th>
+  </tr>
+  <tr>
+    <td><code>numeric-numeric</code></td>
+    <td>수치 → 수치</td>
+    <td>&beta;, r, p-value</td>
+    <td>시계열 회귀분석 (OLS + Granger)</td>
+    <td>A</td>
+  </tr>
+  <tr>
+    <td><code>event-numeric</code></td>
+    <td>이벤트 → 수치</td>
+    <td>&Delta; (변화율 %)</td>
+    <td>Event Study / 유사 사례 / LLM 분해</td>
+    <td>B</td>
+  </tr>
+  <tr>
+    <td><code>event-event</code></td>
+    <td>이벤트 → 이벤트</td>
+    <td>P (확률 0~1)</td>
+    <td>역사적 빈도 / 예측시장 / LLM 삼각측량</td>
+    <td>C</td>
+  </tr>
+  <tr>
+    <td><code>numeric-event</code></td>
+    <td>수치 → 이벤트</td>
+    <td>&theta; (임계값)</td>
+    <td>규제 조회 / Logistic Regression / LLM</td>
+    <td>D</td>
+  </tr>
+</table>
+
+<h3>전체 파이프라인 연결</h3>
+<div class="mermaid">
+flowchart LR
+  A[뉴스 수집\nTavily API] --> B[인과 체인 생성\nClaude Sonnet]
+  B --> C{엣지 타입\n분류}
+  C -->|numeric-numeric| D[Module A\nOLS + Granger]
+  C -->|event-numeric| E[Module B\nEvent Study]
+  C -->|event-event| F[Module C\n삼각측량]
+  C -->|numeric-event| G[Module D\n임계값 추정]
+  D --> H[영향도 전파\nDAG 순회]
+  E --> H
+  F --> H
+  G --> H
+  H --> I[가중 합산\n+ 불확실성]
+  I --> J[UI 표시\n체인별 패널]
+</div>
+
+<p>
+  각 모듈은 <strong>독립적</strong>으로 동작하며, 추정 결과는 공통 인터페이스
+  (<code>params</code>, <code>paramMeta</code>, <code>confidence</code>, <code>rationale</code>, <code>sources[]</code>)
+  로 반환된다. 영향도 전파 엔진은 모든 엣지의 파라미터를 입력받아 체인 단위 / 전체 합산 영향도를 산출한다.
+</p>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="sec2">2. Module A — Numeric→Numeric (&beta;, r, p-value)</h2>
+
+<p>
+  수치 변수 간 인과 관계를 통계적으로 추정한다. FRED/DART 등에서 시계열 데이터를 수집하고,
+  정상성 검정 → 변환 → 최적 시차 탐색 → OLS 회귀 → Granger 인과 검정 파이프라인을 수행한다.
+</p>
+
+<h3>파이프라인 흐름도</h3>
+<div class="mermaid">
+flowchart TD
+  A[데이터 수집\nFRED/DART API] --> B[결측 처리\n선형 보간 / 전방 충전]
+  B --> C[정상성 검정\nADF + KPSS]
+  C --> D{판단 매트릭스}
+  D -->|정상| E[원계열 사용]
+  D -->|비정상| F[변환 적용\n차분 / 로그 / 로그차분]
+  E --> G[최적 시차 탐색\nlag 1~max_lag]
+  F --> G
+  G --> H[OLS 회귀\nY_t = α + βX_{t-lag}]
+  H --> I[Granger 인과 검정]
+  I --> J[결과 반환\nβ, r, p-value, granger_p]
+</div>
+
+<h3 id="sec2-stationarity">정상성 검정 판단 매트릭스</h3>
+<p>
+  ADF(Augmented Dickey-Fuller)와 KPSS(Kwiatkowski-Phillips-Schmidt-Shin) 검정을 동시에 수행하여
+  교차 검증한다. 두 검정의 귀무가설이 서로 반대이므로, 조합을 통해 보다 견고한 판단이 가능하다.
+</p>
+
+<table>
+  <tr>
+    <th>ADF 결과</th>
+    <th>KPSS 결과</th>
+    <th>결론</th>
+    <th>변환</th>
+  </tr>
+  <tr>
+    <td>H0 기각 (p &lt; 0.05)</td>
+    <td>H0 유지 (p &ge; 0.05)</td>
+    <td><span class="badge badge-high">정상</span></td>
+    <td>원계열 사용</td>
+  </tr>
+  <tr>
+    <td>H0 유지 (p &ge; 0.05)</td>
+    <td>H0 기각 (p &lt; 0.05)</td>
+    <td><span class="badge badge-low">비정상</span></td>
+    <td>1차 차분 또는 로그차분</td>
+  </tr>
+  <tr>
+    <td>H0 기각</td>
+    <td>H0 기각</td>
+    <td><span class="badge badge-medium">추세 정상</span></td>
+    <td>추세 제거 후 원계열</td>
+  </tr>
+  <tr>
+    <td>H0 유지</td>
+    <td>H0 유지</td>
+    <td><span class="badge badge-medium">모호</span></td>
+    <td>1차 차분 적용 (보수적)</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <div class="callout-title">ADF vs KPSS 귀무가설</div>
+  <strong>ADF</strong>: H0 = "단위근 존재 (비정상)" → 기각하면 정상<br>
+  <strong>KPSS</strong>: H0 = "정상 과정" → 기각하면 비정상
+</div>
+
+<h3 id="sec2-lag">최적 시차 탐색</h3>
+<p>
+  lag = 1 부터 <code>max_lag</code>까지 각 시차에서 OLS 회귀를 수행하고,
+  상관계수 |r|과 AIC(Akaike Information Criterion)를 비교한다.
+</p>
+
+<table>
+  <tr>
+    <th>기준</th>
+    <th>설명</th>
+    <th>선택 규칙</th>
+  </tr>
+  <tr>
+    <td>AIC</td>
+    <td>모델 적합도와 복잡도 균형</td>
+    <td>AIC가 최소인 lag 선택</td>
+  </tr>
+  <tr>
+    <td>|r|</td>
+    <td>상관계수 절대값</td>
+    <td>AIC 최소 lag와 |r| 최대 lag가 다르면, AIC 우선</td>
+  </tr>
+  <tr>
+    <td>유의성</td>
+    <td>p-value</td>
+    <td>선택된 lag의 p &lt; 0.05 확인</td>
+  </tr>
+</table>
+
+<div class="formula">
+  AIC = 2k - 2ln(L)<br>
+  여기서 k = 파라미터 수, L = 우도(likelihood)
+</div>
+
+<h3 id="sec2-confidence">신뢰도 판정 기준</h3>
+<table>
+  <tr>
+    <th>등급</th>
+    <th>조건</th>
+  </tr>
+  <tr>
+    <td><span class="badge badge-high">high</span></td>
+    <td>p &lt; 0.01 AND n &ge; 120 AND granger_p &lt; 0.05</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-medium">medium</span></td>
+    <td>p &lt; 0.05 AND n &ge; 60</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-low">low</span></td>
+    <td>위 조건 미충족 또는 LLM 추정</td>
+  </tr>
+</table>
+
+<h3 id="sec2-example">Python 입출력 예시</h3>
+<h4>요청 (POST /compute/numeric-to-numeric)</h4>
+<pre><code>{
+  "x_series": [2.1, 2.3, 2.5, 2.2, ...],  // FRED CPI 월간
+  "y_series": [4500, 4520, 4480, ...],       // KOSPI 월간
+  "frequency": "monthly",
+  "max_lag": 12
+}</code></pre>
+
+<h4>응답</h4>
+<pre><code>{
+  "beta": -45.2,
+  "r": -0.42,
+  "p_value": 0.003,
+  "optimal_lag": 3,
+  "granger_p": 0.012,
+  "transform": "diff",
+  "n_obs": 156,
+  "confidence": "medium",
+  "aic_by_lag": [
+    {"lag": 1, "aic": 1842.3, "r": -0.31},
+    {"lag": 2, "aic": 1838.1, "r": -0.38},
+    {"lag": 3, "aic": 1834.7, "r": -0.42},
+    ...
+  ]
+}</code></pre>
+
+<div class="callout">
+  <div class="callout-title">해석</div>
+  "CPI가 1단위 상승하면, 3개월 후 KOSPI가 약 45.2포인트 하락하는 경향이 있다 (p=0.003).
+  Granger 검정도 유의하여 (p=0.012), 단순 상관이 아닌 예측적 인과 관계가 존재한다."
+</div>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="sec3">3. Module B — Event→Numeric (&Delta;)</h2>
+
+<p>
+  이벤트 발생이 수치 변수에 미치는 영향을 추정한다. 3단계 전략을 순차적으로 시도하며,
+  상위 전략이 성공하면 하위 전략은 건너뛴다.
+</p>
+
+<h3>3단계 전략 흐름도</h3>
+<div class="mermaid">
+flowchart TD
+  START[엣지 입력\n이벤트 → 수치] --> S1{전략 1\nEvent Study\n실측 데이터?}
+  S1 -->|데이터 있음| ES[Event Study 수행\nCAR 계산]
+  S1 -->|데이터 없음| S2{전략 2\n유사 사례\n3건 이상?}
+  ES --> RES1[결과: Δ, p-value\nconfidence: high]
+  S2 -->|있음| SIM[유사 사례 Δ 평균\n+ 범위 산출]
+  S2 -->|없음| S3[전략 3\nLLM 분해 추정]
+  SIM --> RES2[결과: Δ, range\nconfidence: medium]
+  S3 --> RES3[결과: Δ 범위\nconfidence: low]
+</div>
+
+<h3 id="sec3-event-study">Event Study 방법론</h3>
+<p>
+  MacKinlay(1997)의 표준 Event Study 방법론을 따른다.
+  핵심 개념은 "이벤트가 없었다면 관측되었을 정상 수익률"과 "실제 수익률"의 차이
+  (비정상수익률, Abnormal Return)를 측정하는 것이다.
+</p>
+
+<table>
+  <tr>
+    <th>구간</th>
+    <th>명칭</th>
+    <th>기간</th>
+    <th>용도</th>
+  </tr>
+  <tr>
+    <td>[-250, -11]</td>
+    <td>추정창 (Estimation Window)</td>
+    <td>약 1년</td>
+    <td>정상 수익률 모형 파라미터 추정</td>
+  </tr>
+  <tr>
+    <td>[-10, -1]</td>
+    <td>사전 이벤트창</td>
+    <td>10 거래일</td>
+    <td>정보 유출 감지</td>
+  </tr>
+  <tr>
+    <td>[0]</td>
+    <td>이벤트일</td>
+    <td>당일</td>
+    <td>이벤트 발생</td>
+  </tr>
+  <tr>
+    <td>[+1, +10]</td>
+    <td>사후 이벤트창</td>
+    <td>10 거래일</td>
+    <td>영향 지속 측정</td>
+  </tr>
+</table>
+
+<div class="formula">
+  AR_t = R_t - (α + β * R_m,t)<br>
+  CAR = Σ AR_t  (이벤트창 내 합산)<br><br>
+  여기서:<br>
+  R_t = 실제 수익률, R_m,t = 시장 수익률<br>
+  α, β = 추정창에서 Market Model로 추정
+</div>
+
+<h3 id="sec3-llm">LLM Decomposition Prompting</h3>
+<p>
+  실측 데이터가 없는 경우, LLM에게 영향을 세분화하여 추정하도록 요청한다.
+  복합적 이벤트를 하위 경로로 분해하고 각각의 영향을 독립적으로 추정한 뒤 합산한다.
+</p>
+
+<pre><code># LLM 프롬프트 예시
+
+이벤트: "미국이 중국산 반도체에 25% 관세 부과"
+대상 변수: "삼성전자 주가"
+
+다음 형식으로 영향을 분해하세요:
+1. 직접 효과: 삼성전자의 중국 매출 비중 × 관세 영향
+2. 간접 효과: 경쟁사(TSMC 등) 반사이익에 따른 시장점유율 변화
+3. 심리 효과: 반도체 섹터 전반 심리 위축
+4. 상쇄 효과: 대체 수요 발생 가능성
+
+각 경로의 추정 Δ(%)와 근거를 제시하세요.</code></pre>
+
+<h3 id="sec3-confidence">신뢰도 판정 기준</h3>
+<table>
+  <tr>
+    <th>등급</th>
+    <th>조건</th>
+  </tr>
+  <tr>
+    <td><span class="badge badge-high">high</span></td>
+    <td>Event Study 실측 데이터 + p &lt; 0.05</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-medium">medium</span></td>
+    <td>유사 사례 3건 이상 + Δ 수렴</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-low">low</span></td>
+    <td>LLM 분해 추정만 사용</td>
+  </tr>
+</table>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="sec4">4. Module C — Event→Event (P 확률)</h2>
+
+<p>
+  선행 이벤트 A가 발생했을 때 후행 이벤트 B의 조건부 발생 확률 P(B|A)를 추정한다.
+  다중 방법 삼각측량(triangulation)으로 편향을 줄인다.
+</p>
+
+<h3>다중 방법 삼각측량 흐름도</h3>
+<div class="mermaid">
+flowchart TD
+  A[입력: 이벤트 A → 이벤트 B] --> M1[방법 1\n역사적 빈도 분석]
+  A --> M2[방법 2\n예측시장 조회\nMetaculus/Polymarket]
+  A --> M3[방법 3\nLLM 구조적 추정\nSuperforecaster 프로토콜]
+  M1 --> AGG{집계}
+  M2 --> AGG
+  M3 --> AGG
+  AGG -->|3방법| EXT[Extremized Mean\n극단화 평균]
+  AGG -->|2방법| AVG[단순 평균]
+  AGG -->|1방법| PASS[그대로 사용]
+  EXT --> OUT[P, confidence\nmethods_used]
+  AVG --> OUT
+  PASS --> OUT
+</div>
+
+<h3 id="sec4-superforecaster">Superforecaster 프로토콜</h3>
+<p>
+  Tetlock(2015)의 연구에 기반한 구조적 확률 추정 방법이다.
+  LLM에게 다음 단계를 순서대로 수행하도록 지시한다:
+</p>
+
+<ol>
+  <li><strong>외부 관점 (Outside View)</strong>: 기저율(base rate) 파악. "이 유형의 이벤트가 역사적으로 얼마나 자주 발생했는가?"</li>
+  <li><strong>내부 관점 (Inside View)</strong>: 현재 상황의 고유한 요인을 분석하여 기저율을 조정</li>
+  <li><strong>반대 관점 (Red Team)</strong>: 반론을 스스로 제기. "왜 이 확률이 틀릴 수 있는가?"</li>
+  <li><strong>최종 조정</strong>: 세 관점을 종합하여 확률 산출 (0.05 단위 반올림)</li>
+</ol>
+
+<div class="callout">
+  <div class="callout-title">Extremized Mean (극단화 평균)</div>
+  3가지 방법의 확률을 단순 평균하면 중앙으로 수렴하는 경향이 있다.
+  이를 보정하기 위해 극단화(extremizing)를 적용한다.<br><br>
+  <code>p_avg = mean(p1, p2, p3)</code><br>
+  <code>p_ext = p_avg^d / (p_avg^d + (1-p_avg)^d)</code><br><br>
+  d는 극단화 계수 (일반적으로 2.5). d &gt; 1이면 확률이 0 또는 1 방향으로 이동한다.
+</div>
+
+<h3 id="sec4-bayesian">베이지안 업데이트</h3>
+<p>
+  새로운 증거(뉴스, 데이터)가 추가될 때 기존 확률을 업데이트한다.
+</p>
+
+<div class="formula">
+  P(B|A, evidence) = P(evidence|B,A) * P(B|A) / P(evidence|A)<br><br>
+  사후확률 = 우도비(LR) * 사전확률 / 정규화 상수
+</div>
+
+<p>
+  실제 시스템에서는 LLM이 우도비를 추정하고, 이를 통해 기존 P(B|A)를 갱신한다.
+  대폭 수정(예: 0.3 → 0.8)이 필요한 경우 사용자 확인을 요청한다.
+</p>
+
+<h3 id="sec4-confidence">신뢰도 판정 기준</h3>
+<table>
+  <tr>
+    <th>등급</th>
+    <th>조건</th>
+  </tr>
+  <tr>
+    <td><span class="badge badge-high">high</span></td>
+    <td>3방법 수렴 (&plusmn;10%p 이내) + 역사적 사례 10건 이상</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-medium">medium</span></td>
+    <td>2방법 일치</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-low">low</span></td>
+    <td>LLM 단독 추정</td>
+  </tr>
+</table>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="sec5">5. Module D — Numeric→Event (&theta; 임계값)</h2>
+
+<p>
+  수치 변수가 특정 값에 도달하면 이벤트가 트리거되는 관계를 추정한다.
+  예: "실업률이 6%를 넘으면 경기침체 선언" 또는 "환율이 1400원을 넘으면 외환위기 우려 부각".
+</p>
+
+<h3>3경로 흐름도</h3>
+<div class="mermaid">
+flowchart TD
+  A[입력: 수치 변수 → 이벤트] --> R1{경로 1\n규제/공식\n임계값 존재?}
+  R1 -->|있음| REG[규제 기준 조회\nLLM으로 확인]
+  R1 -->|없음| R2{경로 2\n과거 데이터\n존재?}
+  REG --> HARD[Hard Threshold\nθ = 공식 기준값]
+  R2 -->|있음| LOG[Logistic Regression\nP(event) = sigmoid(x)]
+  R2 -->|없음| R3[경로 3\nLLM 추정\n+ 교차 검증]
+  LOG --> SOFT[Soft Threshold\nθ + sigmoid params]
+  R3 --> EST[추정값\n+ 불확실성 범위]
+</div>
+
+<h3 id="sec5-threshold">Hard vs Soft Threshold 비교</h3>
+<table>
+  <tr>
+    <th>구분</th>
+    <th>Hard Threshold</th>
+    <th>Soft Threshold</th>
+  </tr>
+  <tr>
+    <td><strong>정의</strong></td>
+    <td>X &ge; &theta; 이면 이벤트 발생 (확률 = 1)</td>
+    <td>X가 &theta; 근처에서 확률이 점진적으로 증가</td>
+  </tr>
+  <tr>
+    <td><strong>수학적 표현</strong></td>
+    <td>P(E) = I(X &ge; &theta;) &nbsp;&nbsp;(지시함수)</td>
+    <td>P(E) = 1 / (1 + exp(-k(X - &theta;)))</td>
+  </tr>
+  <tr>
+    <td><strong>예시</strong></td>
+    <td>환율 &ge; 1400원 → "외환 위기 경고"</td>
+    <td>실업률 증가 → 경기침체 확률 점진 상승</td>
+  </tr>
+  <tr>
+    <td><strong>파라미터</strong></td>
+    <td>&theta; (임계값 하나)</td>
+    <td>&theta; (중심값), k (기울기, 전이 속도)</td>
+  </tr>
+  <tr>
+    <td><strong>결정 방법</strong></td>
+    <td>규제/법규 명시 기준</td>
+    <td>Logistic Regression 적합</td>
+  </tr>
+</table>
+
+<div class="formula">
+  Sigmoid (Soft Threshold):<br>
+  P(event | X) = 1 / (1 + exp(-k * (X - θ)))<br><br>
+  k &gt; 0 : X 증가 → 확률 증가<br>
+  k &lt; 0 : X 증가 → 확률 감소<br>
+  |k| 클수록 전이가 급격 (Hard에 가까움)
+</div>
+
+<h3 id="sec5-confidence">신뢰도 판정 기준</h3>
+<table>
+  <tr>
+    <th>등급</th>
+    <th>조건</th>
+  </tr>
+  <tr>
+    <td><span class="badge badge-high">high</span></td>
+    <td>규제/공식 기준 확인</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-medium">medium</span></td>
+    <td>Logistic Regression p &lt; 0.05 + ROC AUC &gt; 0.7</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-low">low</span></td>
+    <td>LLM 추정 (미검증)</td>
+  </tr>
+</table>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="sec6">6. 영향도 전파 & 합산</h2>
+
+<h3 id="sec6-rules">단일 체인 전파 규칙</h3>
+<p>
+  체인 내 각 엣지 타입에 따라 영향도(impact)가 전파되는 규칙이 다르다.
+  전파는 루트 노드에서 최종 타겟 노드까지 순차적으로 곱셈(또는 할당)으로 진행된다.
+</p>
+
+<table>
+  <tr>
+    <th>엣지 타입</th>
+    <th>입력값</th>
+    <th>전파 규칙</th>
+    <th>출력 단위</th>
+  </tr>
+  <tr>
+    <td><code>numeric-numeric</code></td>
+    <td>상류 &Delta;X (%)</td>
+    <td>impact_out = &Delta;X &times; &beta;</td>
+    <td>타겟 변수 변화량</td>
+  </tr>
+  <tr>
+    <td><code>event-numeric</code></td>
+    <td>이벤트 확률 P_src</td>
+    <td>impact_out = P_src &times; &Delta;</td>
+    <td>기대 변화율 (%)</td>
+  </tr>
+  <tr>
+    <td><code>event-event</code></td>
+    <td>이벤트 확률 P_src</td>
+    <td>impact_out = P_src &times; P(B|A)</td>
+    <td>후행 이벤트 확률</td>
+  </tr>
+  <tr>
+    <td><code>numeric-event</code></td>
+    <td>상류 &Delta;X</td>
+    <td>impact_out = sigmoid(&Delta;X, &theta;, k)</td>
+    <td>이벤트 발생 확률</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <div class="callout-title">전파 핵심 원칙</div>
+  <ul>
+    <li>이벤트 노드에서 나가는 값은 항상 <strong>확률</strong> (0~1)</li>
+    <li>수치 노드에서 나가는 값은 항상 <strong>변화량</strong> (&Delta;%)</li>
+    <li>엣지를 통과할 때마다 해당 엣지의 파라미터가 <strong>곱셈적으로</strong> 적용</li>
+    <li>최종 타겟(수치 노드)에 도달하면 결과는 <strong>"기대 변화율(%)"</strong></li>
+  </ul>
+</div>
+
+<h3 id="sec6-examples">전파 예시</h3>
+
+<h4>예시 1: 순수 수치 체인</h4>
+<pre><code>체인: CPI(수치) → 금리(수치) → KOSPI(수치)
+
+Edge 1: CPI → 금리
+  β₁ = 0.5 (CPI 1%p 상승 → 금리 0.5%p 상승)
+
+Edge 2: 금리 → KOSPI
+  β₂ = -8.0 (금리 1%p 상승 → KOSPI -8% 하락)
+
+시나리오: CPI가 +2%p 상승한다면?
+  Step 1: 금리 변화 = 2 × 0.5 = +1.0%p
+  Step 2: KOSPI 변화 = 1.0 × (-8.0) = -8.0%
+
+  → 최종 영향도: KOSPI -8.0%</code></pre>
+
+<h4>예시 2: 혼합 체인 (이벤트 + 수치)</h4>
+<pre><code>체인: "미중 관세 전쟁"(이벤트) → 반도체 수출(수치) → 삼성전자 매출(수치)
+
+Edge 1: 관세 전쟁 → 반도체 수출  [event-numeric]
+  P(관세 전쟁) = 0.7 (루트 이벤트 확률)
+  Δ = -15% (관세 전쟁 시 반도체 수출 15% 감소)
+
+Edge 2: 반도체 수출 → 삼성전자 매출  [numeric-numeric]
+  β = 0.6 (수출 1% 변화 → 매출 0.6% 변화)
+
+계산:
+  Step 1: 기대 수출 변화 = 0.7 × (-15%) = -10.5%
+  Step 2: 기대 매출 변화 = -10.5% × 0.6 = -6.3%
+
+  → 최종 영향도: 삼성전자 매출 -6.3% (확률 가중)</code></pre>
+
+<h3 id="sec6-dag">DAG 위상 정렬 알고리즘</h3>
+<p>
+  여러 체인이 공유 노드를 가질 수 있으므로, 전체 그래프를 DAG(Directed Acyclic Graph)로
+  취급하고 위상 정렬(topological sort) 순서로 영향도를 계산한다.
+</p>
+
+<pre><code># Python 의사 코드
+def topological_propagate(graph):
+    # 1. 진입 차수(in-degree) 계산
+    in_degree = {node: 0 for node in graph.nodes}
+    for edge in graph.edges:
+        in_degree[edge.to] += 1
+
+    # 2. 진입 차수 0인 노드(루트)를 큐에 삽입
+    queue = [n for n in graph.nodes if in_degree[n] == 0]
+
+    # 3. 위상 정렬 순서로 순회
+    while queue:
+        node = queue.pop(0)
+        for edge in node.outgoing_edges:
+            # 전파 규칙 적용
+            target_impact = apply_propagation(edge, node.impact)
+            edge.to.impact += target_impact
+
+            in_degree[edge.to] -= 1
+            if in_degree[edge.to] == 0:
+                queue.append(edge.to)</code></pre>
+
+<h3 id="sec6-aggregate">다중 체인 가중 합산</h3>
+<p>
+  여러 체인이 동일한 최종 타겟에 도달하면, 각 체인의 영향도를 가중 합산한다.
+</p>
+
+<div class="formula">
+  Total Impact = Σ (w_i × impact_i) / Σ w_i<br><br>
+  가중치: w_i = confidence_score × (1 - p_value) × completeness
+</div>
+
+<h4>가중치 구성 요소</h4>
+<table>
+  <tr>
+    <th>요소</th>
+    <th>값</th>
+    <th>설명</th>
+  </tr>
+  <tr>
+    <td><code>confidence_score</code></td>
+    <td>high=1.0, medium=0.6, low=0.3</td>
+    <td>체인 전체의 최저 confidence 사용</td>
+  </tr>
+  <tr>
+    <td><code>1 - p_value</code></td>
+    <td>0~1</td>
+    <td>통계적 유의성 (numeric-numeric 엣지에만 적용, 나머지는 1.0)</td>
+  </tr>
+  <tr>
+    <td><code>completeness</code></td>
+    <td>0~1</td>
+    <td>체인 내 파라미터 완성율. 미입력(pending) 엣지가 있으면 0</td>
+  </tr>
+</table>
+
+<h4>Null 체인 처리</h4>
+<p>
+  체인 내 하나라도 <code>pending</code> 상태인 엣지가 있으면 해당 체인은
+  <strong>Null 체인</strong>으로 분류된다.
+</p>
+<ul>
+  <li>Null 체인은 합산에서 <strong>제외</strong></li>
+  <li>UI에서 "정량화 불가" 라벨과 함께 별도 섹션에 표시</li>
+  <li>사용자가 missing 파라미터를 입력하면 자동으로 활성 체인으로 전환</li>
+</ul>
+
+<h3 id="sec6-uncertainty">불확실성 전파</h3>
+
+<h4>방법 1: 분석적 방법 (Delta Method)</h4>
+<div class="formula">
+  σ²_total ≈ Σ (∂f/∂x_i)² × σ²_i<br><br>
+  여기서 f = 전파 함수, x_i = 각 엣지 파라미터, σ_i = 파라미터 표준오차
+</div>
+
+<p>
+  각 파라미터의 표준오차가 알려진 경우 (OLS 회귀의 β 표준오차 등),
+  편미분을 통해 최종 영향도의 분산을 근사한다. 빠르지만 비선형 전파에는 부정확할 수 있다.
+</p>
+
+<h4>방법 2: Monte Carlo 시뮬레이션</h4>
+<pre><code>POST /compute/monte-carlo
+{
+  "chains": [...],      // 전체 체인 데이터
+  "n_simulations": 10000
+}
+
+응답:
+{
+  "mean": -3.2,          // 평균 영향도 (%)
+  "median": -2.8,
+  "ci_95": [-8.1, +1.5], // 95% 신뢰구간
+  "p_positive": 0.12,    // 영향도가 양수일 확률
+  "histogram": [...]     // 분포 히스토그램 (50 bins)
+}</code></pre>
+
+<p>
+  각 파라미터를 해당 분포(정규, 베타, 균등 등)에서 랜덤 샘플링하고,
+  전파를 N회 반복하여 최종 영향도의 분포를 구한다.
+  비선형 전파, 꼬리 리스크 평가에 적합하다.
+</p>
+
+<h3 id="sec6-time">시간 지연 필터링</h3>
+<p>
+  각 엣지에는 <code>timeLag</code> (년 단위)이 있다.
+  체인의 총 시간 지연은 각 엣지 timeLag의 합이다.
+</p>
+
+<table>
+  <tr>
+    <th>필터</th>
+    <th>조건</th>
+    <th>설명</th>
+  </tr>
+  <tr>
+    <td>6개월</td>
+    <td>총 timeLag &le; 0.5</td>
+    <td>단기 영향만</td>
+  </tr>
+  <tr>
+    <td>1년</td>
+    <td>총 timeLag &le; 1.0</td>
+    <td>중기까지 포함</td>
+  </tr>
+  <tr>
+    <td>전체</td>
+    <td>제한 없음</td>
+    <td>모든 체인 포함</td>
+  </tr>
+</table>
+
+<h3 id="sec6-ui">최종 UI 표시 예시</h3>
+<p>체인별 영향도 패널 목업:</p>
+
+<div class="mockup">
+  <div style="font-weight:700; color:var(--accent); margin-bottom:12px; font-size:15px;">
+    KOSPI 영향도 분석 &nbsp;|&nbsp; 필터: 1년
+  </div>
+
+  <div class="chain-row">
+    <span class="chain-label"><span style="color:#f87171;">&#9679;</span> &nbsp;CPI → 금리 → KOSPI</span>
+    <span class="chain-value negative">-8.0%</span>
+  </div>
+  <div class="chain-row">
+    <span class="chain-label"><span style="color:#4ade80;">&#9679;</span> &nbsp;AI 수요 → 반도체 수출 → KOSPI</span>
+    <span class="chain-value positive">+4.2%</span>
+  </div>
+  <div class="chain-row">
+    <span class="chain-label"><span style="color:#fbbf24;">&#9679;</span> &nbsp;미중 관세 → 수출 → KOSPI</span>
+    <span class="chain-value negative">-6.3%</span>
+  </div>
+  <div class="chain-row" style="color:var(--text-dim); font-style:italic;">
+    <span class="chain-label"><span style="color:#555;">&#9679;</span> &nbsp;엔화 약세 → 경쟁력 → KOSPI</span>
+    <span class="chain-value" style="color:var(--text-dim);">정량화 불가</span>
+  </div>
+
+  <div class="total-row">
+    <span>가중 합산 영향도</span>
+    <span class="negative">-5.8% &nbsp;[95% CI: -12.1%, +0.5%]</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="sec7">7. 학술적 근거</h2>
+
+<ul class="ref-list">
+  <li>
+    <strong>Wright, S. (1934)</strong>. "The Method of Path Coefficients."
+    <em>Annals of Mathematical Statistics</em>, 5(3), 161–215.
+    — 경로 계수(path coefficient) 방법론의 원조. 인과 체인의 영향도 전파(곱셈적 분해)에 대한 이론적 토대를 제공한다.
+  </li>
+  <li>
+    <strong>Pearl, J. (2009)</strong>. <em>Causality: Models, Reasoning, and Inference</em> (2nd ed.). Cambridge University Press.
+    — DAG 기반 인과 추론의 핵심 이론. do-calculus, 개입(intervention) 개념, 인과 그래프 구조의 수학적 기초를 정립하였다.
+  </li>
+  <li>
+    <strong>MacKinlay, A. C. (1997)</strong>. "Event Studies in Economics and Finance."
+    <em>Journal of Economic Literature</em>, 35(1), 13–39.
+    — Event Study 방법론의 표준 참조 문헌. 추정창/이벤트창 설정, 비정상수익률(AR) 계산, 통계 검정 절차를 상세히 기술한다.
+  </li>
+  <li>
+    <strong>Tetlock, P. E. &amp; Gardner, D. (2015)</strong>. <em>Superforecasting: The Art and Science of Prediction</em>. Crown.
+    — 구조적 확률 추정의 원칙. 기저율 사고, 관점 전환, 극단화(extremizing) 기법 등 Module C의 프로토콜에 반영되었다.
+  </li>
+  <li>
+    <strong>Granger, C. W. J. (1969)</strong>. "Investigating Causal Relations by Econometric Models and Cross-spectral Methods."
+    <em>Econometrica</em>, 37(3), 424–438.
+    — Granger 인과 검정의 원 논문. 시계열 예측에서 "X가 Y 예측에 기여하는가"를 통계적으로 검증하는 방법이다.
+  </li>
+  <li>
+    <strong>Hansen, B. E. (2000)</strong>. "Sample Splitting and Threshold Estimation."
+    <em>Econometrica</em>, 68(3), 575–603.
+    — Threshold 모형 추정 방법론. 수치→이벤트 변환에서 임계값(θ)을 데이터 기반으로 추정하는 이론적 근거를 제공한다.
+  </li>
+  <li>
+    <strong>Kwiatkowski, D., Phillips, P. C. B., Schmidt, P., &amp; Shin, Y. (1992)</strong>.
+    "Testing the null hypothesis of stationarity against the alternative of a unit root."
+    <em>Journal of Econometrics</em>, 54(1-3), 159–178.
+    — KPSS 정상성 검정의 원 논문. ADF 검정과 함께 교차 검증에 사용된다.
+  </li>
+  <li>
+    <strong>Dickey, D. A. &amp; Fuller, W. A. (1979)</strong>.
+    "Distribution of the Estimators for Autoregressive Time Series with a Unit Root."
+    <em>Journal of the American Statistical Association</em>, 74(366), 427–431.
+    — ADF(Augmented Dickey-Fuller) 단위근 검정의 원 논문.
+  </li>
+</ul>
+
+</main>
+
+<script>
+  // Mermaid init
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1e222a',
+      primaryTextColor: '#cdd0d8',
+      primaryBorderColor: '#5eaba2',
+      lineColor: '#5eaba2',
+      secondaryColor: '#181b22',
+      tertiaryColor: '#0f1115',
+      fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif'
+    }
+  });
+
+  // Sidebar toggle
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const main = document.getElementById('main');
+    const toggle = document.getElementById('sidebar-toggle');
+    sidebar.classList.toggle('collapsed');
+    main.classList.toggle('expanded');
+    toggle.classList.toggle('shifted');
+  }
+
+  // Active TOC highlight on scroll
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const sections = [];
+  tocLinks.forEach(link => {
+    const id = link.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if (el) sections.push({ id, el, link });
+  });
+
+  window.addEventListener('scroll', () => {
+    let current = '';
+    for (const sec of sections) {
+      if (sec.el.getBoundingClientRect().top <= 80) {
+        current = sec.id;
+      }
+    }
+    tocLinks.forEach(l => l.classList.remove('active'));
+    const active = document.querySelector(`.toc-list a[href="#${current}"]`);
+    if (active) active.classList.add('active');
+  });
+</script>
+
+</body>
+</html>
