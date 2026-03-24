@@ -27,14 +27,21 @@ function getMainParam(edgeType: string, params: Partial<EdgeParams>): number | n
 
 function formatTopLabel(edgeType: string, params: Partial<EdgeParams>): string {
   switch (edgeType) {
-    case "event-numeric":
-      return params.delta != null ? `Δ=${params.delta > 0 ? "+" : ""}${params.delta}%` : "Δ=?";
-    case "numeric-numeric":
-      return params.beta != null ? `β=${params.beta}` : "β=?";
+    case "event-numeric": {
+      if (params.delta == null) return "Δ=?";
+      const d = Math.round(params.delta * 100) / 100;
+      return `Δ=${d > 0 ? "+" : ""}${d}%`;
+    }
+    case "numeric-numeric": {
+      if (params.beta == null) return "β=?";
+      return `β=${(Math.round(params.beta * 100) / 100)}`;
+    }
     case "event-event":
       return params.probability != null ? `P=${(params.probability * 100).toFixed(0)}%` : "P=?";
-    case "numeric-event":
-      return params.theta != null ? `θ=${params.theta}` : "θ=?";
+    case "numeric-event": {
+      if (params.theta == null) return "θ=?";
+      return `θ=${Math.round(params.theta * 100) / 100}`;
+    }
     default: return "";
   }
 }
@@ -42,10 +49,10 @@ function formatTopLabel(edgeType: string, params: Partial<EdgeParams>): string {
 function formatBottomLabel(edgeType: string, params: Partial<EdgeParams>): string {
   if (edgeType === "numeric-numeric") {
     const parts: string[] = [];
-    if (params.r != null) parts.push(`r=${params.r}`);
+    if (params.r != null) parts.push(`r=${(Math.round(params.r * 100) / 100)}`);
     else parts.push("r=?");
     if (params.p != null) {
-      parts.push(params.p < 0.001 ? `p=${params.p.toExponential(0)}` : `p=${params.p.toFixed(3)}`);
+      parts.push(params.p < 0.001 ? `p=${params.p.toExponential(1)}` : `p=${(Math.round(params.p * 100) / 100)}`);
     }
     return parts.join("  ");
   }

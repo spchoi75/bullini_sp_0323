@@ -27,7 +27,7 @@ export function formatPValue(value: number | null | undefined): string {
 export function formatDelta(value: number | null | undefined): string {
   if (value == null) return "Δ=?";
   const sign = value > 0 ? "+" : "";
-  return `Δ=${sign}${value}%`;
+  return `Δ=${sign}${round2(value)}%`;
 }
 
 export function formatProbability(value: number | null | undefined): string {
@@ -37,7 +37,12 @@ export function formatProbability(value: number | null | undefined): string {
 
 export function formatTheta(value: number | null | undefined): string {
   if (value == null) return "θ=?";
-  return `θ=${value}`;
+  return `θ=${round2(value)}`;
+}
+
+/** 소수점 둘째자리 반올림 */
+export function round2(v: number): number {
+  return Math.round(v * 100) / 100;
 }
 
 export function formatTimeLag(years: number): string {
