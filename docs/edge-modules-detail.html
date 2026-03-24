@@ -422,18 +422,18 @@
 <h3>전체 파이프라인 연결</h3>
 <div class="mermaid">
 flowchart LR
-  A[뉴스 수집\nTavily API] --> B[인과 체인 생성\nClaude Sonnet]
-  B --> C{엣지 타입\n분류}
-  C -->|numeric-numeric| D[Module A\nOLS + Granger]
-  C -->|event-numeric| E[Module B\nEvent Study]
-  C -->|event-event| F[Module C\n삼각측량]
-  C -->|numeric-event| G[Module D\n임계값 추정]
-  D --> H[영향도 전파\nDAG 순회]
+  A[뉴스 수집<br/>Tavily API] --> B[인과 체인 생성<br/>Claude Sonnet]
+  B --> C{엣지 타입<br/>분류}
+  C -->|numeric-numeric| D[Module A<br/>OLS + Granger]
+  C -->|event-numeric| E[Module B<br/>Event Study]
+  C -->|event-event| F[Module C<br/>삼각측량]
+  C -->|numeric-event| G[Module D<br/>임계값 추정]
+  D --> H[영향도 전파<br/>DAG 순회]
   E --> H
   F --> H
   G --> H
-  H --> I[가중 합산\n+ 불확실성]
-  I --> J[UI 표시\n체인별 패널]
+  H --> I[가중 합산<br/>+ 불확실성]
+  I --> J[UI 표시<br/>체인별 패널]
 </div>
 
 <p>
@@ -454,16 +454,16 @@ flowchart LR
 <h3>파이프라인 흐름도</h3>
 <div class="mermaid">
 flowchart TD
-  A[데이터 수집\nFRED/DART API] --> B[결측 처리\n선형 보간 / 전방 충전]
-  B --> C[정상성 검정\nADF + KPSS]
+  A[데이터 수집<br/>FRED/DART API] --> B[결측 처리<br/>선형 보간 / 전방 충전]
+  B --> C[정상성 검정<br/>ADF + KPSS]
   C --> D{판단 매트릭스}
   D -->|정상| E[원계열 사용]
-  D -->|비정상| F[변환 적용\n차분 / 로그 / 로그차분]
-  E --> G[최적 시차 탐색\nlag 1~max_lag]
+  D -->|비정상| F[변환 적용<br/>차분 / 로그 / 로그차분]
+  E --> G[최적 시차 탐색<br/>lag 1~max_lag]
   F --> G
-  G --> H[OLS 회귀\nY_t = α + βX_{t-lag}]
+  G --> H[OLS 회귀<br/>Y = a + b*X lag]
   H --> I[Granger 인과 검정]
-  I --> J[결과 반환\nβ, r, p-value, granger_p]
+  I --> J[결과 반환<br/>b, r, p-value, granger_p]
 </div>
 
 <h3 id="sec2-stationarity">정상성 검정 판단 매트릭스</h3>
@@ -610,14 +610,14 @@ flowchart TD
 <h3>3단계 전략 흐름도</h3>
 <div class="mermaid">
 flowchart TD
-  START[엣지 입력\n이벤트 → 수치] --> S1{전략 1\nEvent Study\n실측 데이터?}
-  S1 -->|데이터 있음| ES[Event Study 수행\nCAR 계산]
-  S1 -->|데이터 없음| S2{전략 2\n유사 사례\n3건 이상?}
-  ES --> RES1[결과: Δ, p-value\nconfidence: high]
-  S2 -->|있음| SIM[유사 사례 Δ 평균\n+ 범위 산출]
-  S2 -->|없음| S3[전략 3\nLLM 분해 추정]
-  SIM --> RES2[결과: Δ, range\nconfidence: medium]
-  S3 --> RES3[결과: Δ 범위\nconfidence: low]
+  START[엣지 입력<br/>이벤트 → 수치] --> S1{전략 1<br/>Event Study<br/>실측 데이터?}
+  S1 -->|데이터 있음| ES[Event Study 수행<br/>CAR 계산]
+  S1 -->|데이터 없음| S2{전략 2<br/>유사 사례<br/>3건 이상?}
+  ES --> RES1["결과: Δ, p-value<br/>confidence: high"]
+  S2 -->|있음| SIM["유사 사례 Δ 평균<br/>+ 범위 산출"]
+  S2 -->|없음| S3[전략 3<br/>LLM 분해 추정]
+  SIM --> RES2["결과: Δ, range<br/>confidence: medium"]
+  S3 --> RES3["결과: Δ 범위<br/>confidence: low"]
 </div>
 
 <h3 id="sec3-event-study">Event Study 방법론</h3>
@@ -719,16 +719,16 @@ flowchart TD
 <h3>다중 방법 삼각측량 흐름도</h3>
 <div class="mermaid">
 flowchart TD
-  A[입력: 이벤트 A → 이벤트 B] --> M1[방법 1\n역사적 빈도 분석]
-  A --> M2[방법 2\n예측시장 조회\nMetaculus/Polymarket]
-  A --> M3[방법 3\nLLM 구조적 추정\nSuperforecaster 프로토콜]
+  A[입력: 이벤트 A → 이벤트 B] --> M1[방법 1<br/>역사적 빈도 분석]
+  A --> M2[방법 2<br/>예측시장 조회<br/>Metaculus/Polymarket]
+  A --> M3[방법 3<br/>LLM 구조적 추정<br/>Superforecaster 프로토콜]
   M1 --> AGG{집계}
   M2 --> AGG
   M3 --> AGG
-  AGG -->|3방법| EXT[Extremized Mean\n극단화 평균]
+  AGG -->|3방법| EXT[Extremized Mean<br/>극단화 평균]
   AGG -->|2방법| AVG[단순 평균]
   AGG -->|1방법| PASS[그대로 사용]
-  EXT --> OUT[P, confidence\nmethods_used]
+  EXT --> OUT[P, confidence<br/>methods_used]
   AVG --> OUT
   PASS --> OUT
 </div>
@@ -802,14 +802,14 @@ flowchart TD
 <h3>3경로 흐름도</h3>
 <div class="mermaid">
 flowchart TD
-  A[입력: 수치 변수 → 이벤트] --> R1{경로 1\n규제/공식\n임계값 존재?}
-  R1 -->|있음| REG[규제 기준 조회\nLLM으로 확인]
-  R1 -->|없음| R2{경로 2\n과거 데이터\n존재?}
-  REG --> HARD[Hard Threshold\nθ = 공식 기준값]
-  R2 -->|있음| LOG[Logistic Regression\nP(event) = sigmoid(x)]
-  R2 -->|없음| R3[경로 3\nLLM 추정\n+ 교차 검증]
-  LOG --> SOFT[Soft Threshold\nθ + sigmoid params]
-  R3 --> EST[추정값\n+ 불확실성 범위]
+  A[입력: 수치 변수 → 이벤트] --> R1{경로 1<br/>규제/공식<br/>임계값 존재?}
+  R1 -->|있음| REG[규제 기준 조회<br/>LLM으로 확인]
+  R1 -->|없음| R2{경로 2<br/>과거 데이터<br/>존재?}
+  REG --> HARD["Hard Threshold<br/>θ = 공식 기준값"]
+  R2 -->|있음| LOG["Logistic Regression<br/>P event = sigmoid x"]
+  R2 -->|없음| R3[경로 3<br/>LLM 추정<br/>+ 교차 검증]
+  LOG --> SOFT["Soft Threshold<br/>θ + sigmoid params"]
+  R3 --> EST[추정값<br/>+ 불확실성 범위]
 </div>
 
 <h3 id="sec5-threshold">Hard vs Soft Threshold 비교</h3>
