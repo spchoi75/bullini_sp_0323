@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import numeric_to_numeric, event_study, numeric_to_event, propagation
+from routers import numeric_to_numeric, event_study, numeric_to_event, propagation, data_sources
 
 app = FastAPI(
     title="Bullini Stats Server",
@@ -22,6 +22,7 @@ app.include_router(numeric_to_numeric.router, prefix="/compute", tags=["numeric-
 app.include_router(event_study.router, prefix="/compute", tags=["event-study"])
 app.include_router(numeric_to_event.router, prefix="/compute", tags=["numeric-to-event"])
 app.include_router(propagation.router, prefix="/compute", tags=["propagation"])
+app.include_router(data_sources.router, prefix="/data", tags=["data-sources"])
 
 
 @app.get("/health")
