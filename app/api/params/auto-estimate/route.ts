@@ -447,20 +447,30 @@ JSON 출력: { "params": {...}, "rationale": "...", "sourceUrl": "...", "sourceN
 // Fallback: LLM 추정 (근거 있으면 값, 없으면 null + 가이드)
 // ============================================================
 async function estimateWithLlmFallback(edge: CausalEdge) {
-  // 먼저 Sonnet으로 추정 시도
+  // 엣지 타입에 따라 필요한 파라미터 키 명시
+  const paramGuide: Record<string, string> = {
+    "numeric-numeric": '필요 파라미터: beta(회귀 기울기, X 1단위 변화 시 Y 변화량), r(상관계수 -1~1), p(p-value 0~1)\n출력: { "params": { "beta": number|null, "r": number|null, "p": number|null }, ... }',
+    "event-numeric": '필요 파라미터: delta(변화량 %)\n출력: { "params": { "delta": number|null }, ... }',
+    "event-event": '필요 파라미터: probability(조건부 확률 0~1)\n출력: { "params": { "probability": number|null }, ... }',
+    "numeric-event": '필요 파라미터: theta(임계값)\n출력: { "params": { "theta": number|null }, ... }',
+  };
+
   const estimatePrompt = `다음 인과 명제의 파라미터를 추정하세요.
 
 명제: ${edge.proposition}
 타입: ${edge.edgeType}
 근거: ${edge.rationale}
 
-## 규칙
-1. 경제학적 근거가 명확하면 구체적 수치를 제시
-2. 근거를 찾을 수 없으면 반드시 null로 놔두세요 (절대 지어내지 마세요)
-3. null인 경우 대략적인 추정 범위(estimatedRange)만 제시
-4. 근거 자료 URL은 실제 존재하는 것만 포함
+## ${paramGuide[edge.edgeType] ?? ""}
 
-JSON 출력: { "params": {...}, "hasEvidence": true|false, "rationale": "...", "estimatedRange": [low, high]|null, "sources": [...] }`;
+## 규칙
+1. 경제학 연구, 실증 분석, 업계 통계 등의 근거가 있으면 구체적 수치를 제시
+2. 근거를 찾을 수 없으면 반드시 null (절대 지어내지 마세요)
+3. null인 경우 대략적인 추정 범위(estimatedRange)만 제시
+4. numeric-numeric의 경우: beta, r, p를 모두 추정 시도. beta만이라도 추정 가능하면 제시
+5. 근거 자료 URL은 실제 존재하는 것만
+
+JSON 출력: { "params": { ... }, "hasEvidence": true|false, "rationale": "...", "estimatedRange": [low, high]|null, "sources": [{ "label": "...", "url": "...", "type": "research" }] }`;
 
   const res = await callClaude(
     [{ role: "user", content: estimatePrompt }],

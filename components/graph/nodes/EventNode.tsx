@@ -39,7 +39,7 @@ function EventNode({ data }: NodeProps) {
             key={i}
             className="block leading-tight"
             style={{
-              fontSize: "10px",
+              fontSize: "11px",
               fontWeight: i === 0 ? 700 : 500,
               color: i === 0 ? "#e8eaef" : "#a0a4b0",
             }}

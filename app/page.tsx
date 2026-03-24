@@ -23,38 +23,43 @@ export default function Home() {
   const updateEdge = useCausalStore((s) => s.updateEdge);
   const selectedEdgeId = useCausalStore((s) => s.selectedEdgeId);
 
-  // 모든 엣지에 대해 자동 추정 실행
+  // 모든 엣지에 대해 자동 추정 실행 (3개씩 병렬 배치)
   const runAutoEstimate = useCallback(
     async (chains: { edges: CausalEdge[] }[]) => {
       const allEdges = chains.flatMap((c) => c.edges);
       if (allEdges.length === 0) return;
 
       setEstimating(true);
+      // 모든 엣지를 한 번에 병렬 처리
+      const BATCH_SIZE = allEdges.length; // 전부 동시 실행
 
-      for (const edge of allEdges) {
-        try {
-          const res = await fetch("/api/params/auto-estimate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ edge }),
-          });
-          if (!res.ok) continue;
-          const result = await res.json();
-          if (result.error) continue;
+      for (let i = 0; i < allEdges.length; i += BATCH_SIZE) {
+        const batch = allEdges.slice(i, i + BATCH_SIZE);
+        const results = await Promise.allSettled(
+          batch.map(async (edge) => {
+            const res = await fetch("/api/params/auto-estimate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ edge }),
+            });
+            if (!res.ok) return null;
+            const result = await res.json();
+            return result.error ? null : { edgeId: edge.id, edge, result };
+          })
+        );
 
-          // 결과를 즉시 스토어에 반영
-          updateEdge(edge.id, {
-            params: { ...edge.params, ...result.params },
-            paramMeta: { ...edge.paramMeta, ...result.paramMeta },
-            rationale: result.rationale ?? edge.rationale,
-            confidence: result.confidence ?? edge.confidence,
-            sources: [
-              ...edge.sources,
-              ...(result.sources ?? []),
-            ],
-          });
-        } catch (err) {
-          console.error(`엣지 ${edge.id} 추정 실패:`, err);
+        // 배치 결과 즉시 스토어에 반영
+        for (const r of results) {
+          if (r.status === "fulfilled" && r.value) {
+            const { edgeId, edge, result } = r.value;
+            updateEdge(edgeId, {
+              params: { ...edge.params, ...result.params },
+              paramMeta: { ...edge.paramMeta, ...result.paramMeta },
+              rationale: result.rationale ?? edge.rationale,
+              confidence: result.confidence ?? edge.confidence,
+              sources: [...edge.sources, ...(result.sources ?? [])],
+            });
+          }
         }
       }
 

@@ -35,7 +35,7 @@ function NumericNode({ data }: NodeProps) {
             key={i}
             className="block leading-tight"
             style={{
-              fontSize: "10px",
+              fontSize: "11px",
               fontWeight: i === 0 ? 600 : 400,
               color: i === 0 ? "#d0d3dc" : "#7a7e8c",
               fontFamily: i > 0 ? "'Geist Mono', monospace" : undefined,

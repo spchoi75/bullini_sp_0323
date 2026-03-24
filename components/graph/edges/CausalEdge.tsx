@@ -152,9 +152,9 @@ function CausalEdgeComponent({
               style={{
                 position: "absolute",
                 transform: `translate(-50%, -100%) translate(${labelX}px, ${labelY - 8}px)`,
-                fontSize: "9px",
+                fontSize: "10px",
                 fontFamily: "'Geist Mono', monospace",
-                fontWeight: 600,
+                fontWeight: 700,
                 color: isNull ? "#8a7a50" : strokeColor,
                 whiteSpace: "nowrap",
               }}
@@ -170,10 +170,10 @@ function CausalEdgeComponent({
               style={{
                 position: "absolute",
                 transform: `translate(-50%, 0%) translate(${labelX}px, ${labelY + 6}px)`,
-                fontSize: "8px",
+                fontSize: "9px",
                 fontFamily: "'Geist Mono', monospace",
-                fontWeight: 400,
-                color: "#5a5e6c",
+                fontWeight: 500,
+                color: "#7a7e8c",
                 whiteSpace: "nowrap",
               }}
             >
