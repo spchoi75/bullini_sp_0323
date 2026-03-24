@@ -86,6 +86,51 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
+
+  /* Surface 계층 */
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-surface-4: var(--surface-4);
+
+  /* 텍스트 계층 */
+  --color-foreground-light: var(--foreground-light);
+
+  /* 보더 계층 */
+  --color-border-2: var(--border-2);
+  --color-border-layout: var(--border-layout);
+
+  /* 트레이딩 토큰 */
+  --color-up: var(--up);
+  --color-down: var(--down);
+
+  /* 개연성 토큰 */
+  --color-prob-very-high: var(--prob-very-high);
+  --color-prob-high: var(--prob-high);
+  --color-prob-mid: var(--prob-mid);
+  --color-prob-low: var(--prob-low);
+
+  /* 영향도 토큰 */
+  --color-impact-positive: var(--impact-positive);
+  --color-impact-neutral: var(--impact-neutral);
+  --color-impact-negative: var(--impact-negative);
+
+  /* 시나리오 토큰 */
+  --color-scenario-bull: var(--scenario-bull);
+  --color-scenario-base: var(--scenario-base);
+  --color-scenario-bear: var(--scenario-bear);
+
+  /* Glow */
+  --color-glow: var(--glow);
+  --color-glow-secondary: var(--glow-secondary);
+
+  /* 그래프 전용 */
+  --color-node-bg: var(--node-bg);
+  --color-tooltip-bg: var(--tooltip-bg);
+  --color-tooltip-border: var(--tooltip-border);
+  --color-final-node-bg: var(--final-node-bg);
+  --color-null-param: var(--null-param);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -157,6 +202,51 @@
   --sidebar-accent-foreground: #cdd0d8;
   --sidebar-border: #242936;
   --sidebar-ring: #5eaba2;
+
+  /* ── Surface 계층 ── */
+  --surface-1: #12151b;
+  --surface-2: #181c24;
+  --surface-3: #1a1e26;
+  --surface-4: #242936;
+
+  /* ── 텍스트 계층 ── */
+  --foreground-light: #a0a4b0;
+
+  /* ── 보더 계층 ── */
+  --border-2: #2a2f3a;
+  --border-layout: #1e2230;
+
+  /* ── 트레이딩 토큰 ── */
+  --up: #6fcf97;
+  --down: #eb5757;
+
+  /* ── 개연성(Probability) 토큰 ── */
+  --prob-very-high: #6fcf97;
+  --prob-high: #4a9e6e;
+  --prob-mid: #f2c94c;
+  --prob-low: #eb5757;
+
+  /* ── 영향도(Impact) 토큰 ── */
+  --impact-positive: #6fcf97;
+  --impact-neutral: #5e6274;
+  --impact-negative: #eb5757;
+
+  /* ── 시나리오 토큰 ── */
+  --scenario-bull: #6fcf97;
+  --scenario-base: #5e6274;
+  --scenario-bear: #eb5757;
+
+  /* ── Glow 효과 ── */
+  --glow: #5eaba2;
+  --glow-opacity: 0.25;
+  --glow-secondary: #4a8e87;
+
+  /* ── 그래프 전용 토큰 ── */
+  --node-bg: #272d3d;
+  --tooltip-bg: #1a1e28;
+  --tooltip-border: #2a2f3a;
+  --final-node-bg: #1f3330;
+  --null-param: #8a7a50;
 }
 
 @layer base {
@@ -168,5 +258,62 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* ── Glassmorphism ── */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.glass-strong {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px) saturate(2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ── Shadow Tokens ── */
+.shadow-glow {
+  box-shadow: 0 0 12px rgba(94, 171, 162, var(--glow-opacity, 0.25));
+}
+.shadow-glass {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.shadow-glass-strong {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.shadow-focus {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+/* ── 시맨틱 타이포그래피 ── */
+.heading-xl { font-size: 24px; font-weight: 700; line-height: 1.25; }
+.heading-lg { font-size: 20px; font-weight: 700; line-height: 1.25; }
+.heading-md { font-size: 17px; font-weight: 600; line-height: 1.25; }
+.heading-sm { font-size: 15px; font-weight: 600; line-height: 1.25; }
+.body       { font-size: 14px; font-weight: 400; line-height: 1.5; }
+.body-sm    { font-size: 13px; font-weight: 400; line-height: 1.35; }
+.data       { font-size: 13px; font-weight: 500; line-height: 1.3; font-family: var(--font-mono); }
+.label      { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+.caption    { font-size: 13px; color: var(--muted-foreground); }
+
+/* ── 모션 토큰 ── */
+@keyframes tooltip-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes dropdown-open {
+  from { opacity: 0; transform: scaleY(0.96) translateY(-4px); }
+  to   { opacity: 1; transform: scaleY(1) translateY(0); }
+}
+.animate-tooltip-in  { animation: tooltip-in 150ms ease-out forwards; }
+.animate-dropdown-open { animation: dropdown-open 200ms ease-out forwards; }
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

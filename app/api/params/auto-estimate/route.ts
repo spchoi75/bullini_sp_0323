@@ -632,7 +632,7 @@ export async function POST(req: NextRequest) {
     try {
       const identifyRes = await callClaude(
         [{ role: "user", content: buildDataIdentifyPrompt(fromLabel, toLabel, edge.edgeType, edge.proposition) }],
-        { model: "haiku", maxTokens: 1024, temperature: 0.1, system: DATA_IDENTIFY_SYSTEM }
+        { model: "sonnet", maxTokens: 1024, temperature: 0.1, system: DATA_IDENTIFY_SYSTEM }
       );
       sourceInfo = parseJson(identifyRes);
     } catch {
