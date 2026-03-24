@@ -15,6 +15,7 @@ import "@xyflow/react/dist/style.css";
 
 import { useCausalStore } from "@/lib/store/causal-store";
 import { chainsToFlowData } from "@/lib/utils/graph-layout";
+import { calcAggregateImpact } from "@/lib/utils/impact-calc";
 
 import EventNode from "./nodes/EventNode";
 import NumericNode from "./nodes/NumericNode";
@@ -40,16 +41,28 @@ export default function CausalGraph() {
   const hoverChain = useCausalStore((s) => s.hoverChain);
   const hoveredChainId = useCausalStore((s) => s.hoveredChainId);
 
-  // Convert chains to React Flow data
+  // 영향도 계산 (파라미터 변경 시 실시간 재계산)
+  const aggregate = useMemo(() => {
+    if (!project || project.chains.length === 0) return null;
+    return calcAggregateImpact(project.chains);
+  }, [project]);
+
+  // Convert chains to React Flow data + totalImpact 주입
   const flowData = useMemo(() => {
     if (!project || project.chains.length === 0) {
       return { nodes: [] as Node[], edges: [] as Edge[] };
     }
-    return chainsToFlowData(
+    const data = chainsToFlowData(
       project.chains,
-      project.targetAsset ?? "한국 반도체 기업 주가지수"
+      project.targetAsset ?? "타겟 자산"
     );
-  }, [project]);
+    // FinalNode에 totalImpact 주입
+    const finalNode = data.nodes.find((n) => n.id === "__final__");
+    if (finalNode && aggregate) {
+      finalNode.data = { ...finalNode.data, totalImpact: aggregate.totalImpact };
+    }
+    return data;
+  }, [project, aggregate]);
 
   // Apply hover dimming
   const styledNodes = useMemo(() => {
