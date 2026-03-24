@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { EdgeType, EdgeParams } from "@/lib/types/causal";
+import type { EdgeType, EdgeParams, ParamMeta } from "@/lib/types/causal";
 import { useCausalStore } from "@/lib/store/causal-store";
 
 interface ParamField {
@@ -25,12 +25,14 @@ interface ParamEditorProps {
   edgeId: string;
   edgeType: EdgeType;
   params: EdgeParams;
+  paramMeta?: Record<string, ParamMeta>;
 }
 
 export default function ParamEditor({
   edgeId,
   edgeType,
   params,
+  paramMeta,
 }: ParamEditorProps) {
   const updateEdgeParams = useCausalStore((s) => s.updateEdgeParams);
   const fields = PARAM_FIELDS[edgeType] ?? [];
@@ -72,59 +74,91 @@ export default function ParamEditor({
           const value = params[field.key];
           const isNull = value === null || value === undefined;
           const isEditing = editingKey === field.key;
+          const meta = paramMeta?.[field.key] as ParamMeta | undefined;
+          const hasRange = meta?.estimatedRange != null;
 
           return (
-            <div
-              key={field.key}
-              className={`flex items-center justify-between rounded px-3 py-2 ${
-                isNull ? "bg-yellow/10 border border-yellow/30" : "bg-card"
-              }`}
-            >
-              <span className="text-xs text-soft">
-                {field.label}
-                {field.unit && (
-                  <span className="ml-1 text-dim">({field.unit})</span>
-                )}
-              </span>
+            <div key={field.key}>
+              <div
+                className={`flex items-center justify-between rounded px-3 py-2 ${
+                  isNull ? "bg-yellow/10 border border-yellow/30" : "bg-card"
+                }`}
+              >
+                <span className="text-xs text-soft">
+                  {field.label}
+                  {field.unit && (
+                    <span className="ml-1 text-dim">({field.unit})</span>
+                  )}
+                </span>
 
-              {isEditing ? (
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    step="any"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") saveEdit(field.key);
-                      if (e.key === "Escape") cancelEdit();
-                    }}
-                    className="h-6 w-20 rounded border border-border bg-background px-1.5 text-xs font-mono text-foreground outline-none focus:border-accent"
-                    autoFocus
-                  />
+                {isEditing ? (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      step="any"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveEdit(field.key);
+                        if (e.key === "Escape") cancelEdit();
+                      }}
+                      className="h-6 w-20 rounded border border-border bg-background px-1.5 text-xs font-mono text-foreground outline-none focus:border-accent"
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => saveEdit(field.key)}
+                      className="text-[10px] text-accent hover:underline"
+                    >
+                      저장
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="text-[10px] text-dim hover:text-soft"
+                    >
+                      취소
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={() => saveEdit(field.key)}
-                    className="text-[10px] text-accent hover:underline"
+                    onClick={() => startEdit(field.key, value)}
+                    className="text-xs font-mono hover:text-accent transition-colors"
                   >
-                    저장
+                    {isNull ? (
+                      <span className="text-yellow">&mdash;</span>
+                    ) : (
+                      <span className="text-foreground">{value}</span>
+                    )}
                   </button>
+                )}
+              </div>
+
+              {/* 추정 범위 표시 (null인 파라미터에 대해) */}
+              {isNull && hasRange && meta?.estimatedRange && (
+                <div className="mt-0.5 flex items-center gap-2 px-3">
+                  <span className="text-[9px] text-yellow/70">
+                    추정 범위: {meta.estimatedRange[0]} ~ {meta.estimatedRange[1]}
+                  </span>
                   <button
-                    onClick={cancelEdit}
-                    className="text-[10px] text-dim hover:text-soft"
+                    onClick={() => {
+                      // 범위 중앙값으로 자동 입력
+                      const mid = (meta.estimatedRange![0] + meta.estimatedRange![1]) / 2;
+                      updateEdgeParams(edgeId, { [field.key]: Math.round(mid * 100) / 100 });
+                    }}
+                    className="text-[9px] text-accent hover:underline"
                   >
-                    취소
+                    중앙값 입력
                   </button>
                 </div>
-              ) : (
-                <button
-                  onClick={() => startEdit(field.key, value)}
-                  className="text-xs font-mono hover:text-accent transition-colors"
-                >
-                  {isNull ? (
-                    <span className="text-yellow">&mdash;</span>
-                  ) : (
-                    <span className="text-foreground">{value}</span>
-                  )}
-                </button>
+              )}
+
+              {/* 추정 방법 표시 */}
+              {meta?.method && (
+                <div className="mt-0.5 px-3">
+                  <span className="text-[8px] text-dim">
+                    {meta.status === "auto" ? "🟢" : meta.status === "estimated" ? "🟡" : meta.status === "pending" ? "🔴" : "⚪"}
+                    {" "}{meta.method}
+                  </span>
+                </div>
               )}
             </div>
           );

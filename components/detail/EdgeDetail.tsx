@@ -100,6 +100,7 @@ export default function EdgeDetail() {
         edgeId={edge.id}
         edgeType={edge.edgeType}
         params={edge.params}
+        paramMeta={edge.paramMeta}
       />
 
       {/* Rationale */}

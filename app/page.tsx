@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { toast } from "sonner";
 import Header from "@/components/layout/Header";
 import ThreePanel from "@/components/layout/ThreePanel";
 import CausalGraph from "@/components/graph/CausalGraph";
@@ -57,6 +58,7 @@ export default function Home() {
       }
 
       setEstimating(false);
+      toast.success("파라미터 자동 추정 완료");
     },
     [setEstimating, updateEdge]
   );
@@ -87,7 +89,7 @@ export default function Home() {
         runAutoEstimate(data.chains);
       } catch (err) {
         console.error("체인 생성 실패:", err);
-        alert(
+        toast.error(
           err instanceof Error
             ? `체인 생성 실패: ${err.message}`
             : "체인 생성 실패"

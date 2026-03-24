@@ -97,7 +97,7 @@
 - [x] `app/api/params/fred/route.ts` ✅ 작동 확인
 - [x] `lib/api/dart.ts` — DART API (getDartFinancials, fs_div 포함) ✅ 작동 확인
 - [x] `app/api/params/dart/route.ts` ✅ 작동 확인
-- [ ] `lib/api/finnhub.ts` — Finnhub API ❌ 미구현
+- [x] `lib/api/finnhub.ts` — Finnhub API (getStockCandles, getQuote, symbolSearch) ✅
 
 ### 4.2 Python 통계 서버
 - [x] `python/routers/numeric_to_numeric.py` — 정상성 검정 + OLS + Granger ✅ 작동 확인
@@ -144,8 +144,8 @@
 
 ### 5.3 상태 처리
 - [x] 생성 중 로딩 ("생성 중..." 버튼)
-- [ ] **#10** 에러 상태 (토스트 메시지 + 재시도) ❌ (현재 alert만)
-- [ ] 빈 상태 개선 ❌
+- [x] **#10** 에러 상태 (toast 메시지 via sonner) ✅
+- [x] 자동 추정 완료 toast 알림 ✅
 
 ### 5.4 포매팅
 - [x] `lib/utils/format.ts` — 숫자 포맷
