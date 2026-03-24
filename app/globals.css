@@ -57,8 +57,8 @@
   --color-green: var(--green);
   --color-yellow: var(--yellow);
   --color-red: var(--red);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -112,37 +112,51 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Bullini 커스텀 다크 테마 */
+  --background: #0f1115;
+  --foreground: #cdd0d8;
+  --card: #181c24;
+  --card-foreground: #cdd0d8;
+  --panel: #12151b;
+  --popover: #181c24;
+  --popover-foreground: #cdd0d8;
+  --primary: #5eaba2;
+  --primary-foreground: #0f1115;
+  --secondary: #242936;
+  --secondary-foreground: #cdd0d8;
+  --muted: #1a1e26;
+  --muted-foreground: #5e6274;
+  --accent: #5eaba2;
+  --accent-foreground: #0f1115;
+  --destructive: #eb5757;
+  --border: #242936;
+  --input: #242936;
+  --ring: #5eaba2;
+  --soft: #a0a4b0;
+  --dim: #5e6274;
+  --green: #6fcf97;
+  --yellow: #f2c94c;
+  --red: #eb5757;
+  /* 체인 색상 */
+  --chain-1: #7eb8d0;
+  --chain-2: #5eaba2;
+  --chain-3: #9b8ec4;
+  --chain-4: #d4726a;
+  --chain-5: #d4975a;
+  --chain-6: #6aad82;
+  --chart-1: #7eb8d0;
+  --chart-2: #5eaba2;
+  --chart-3: #9b8ec4;
+  --chart-4: #d4726a;
+  --chart-5: #d4975a;
+  --sidebar: #12151b;
+  --sidebar-foreground: #cdd0d8;
+  --sidebar-primary: #5eaba2;
+  --sidebar-primary-foreground: #0f1115;
+  --sidebar-accent: #1a1e26;
+  --sidebar-accent-foreground: #cdd0d8;
+  --sidebar-border: #242936;
+  --sidebar-ring: #5eaba2;
 }
 
 @layer base {
