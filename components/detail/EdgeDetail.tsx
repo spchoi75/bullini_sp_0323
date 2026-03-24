@@ -1,8 +1,102 @@
 "use client";
 
+import { useState } from "react";
 import { useCausalStore } from "@/lib/store/causal-store";
-import type { Confidence, EdgeType } from "@/lib/types/causal";
+import type { Confidence, EdgeType, CausalEdge } from "@/lib/types/causal";
 import ParamEditor from "./ParamEditor";
+
+function BayesianUpdateButton({ edge }: { edge: CausalEdge }) {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{
+    prior: number;
+    posterior: number;
+    delta: number;
+    needsConfirmation: boolean;
+    evidences: { evidence: string; lr: number; reasoning: string }[];
+  } | null>(null);
+
+  const handleUpdate = async () => {
+    setLoading(true);
+    setResult(null);
+    try {
+      const fromLabel = edge.proposition.split("하면")[0]?.trim() ?? "";
+      const toLabel = edge.proposition.split("하면")[1]?.split("한다")[0]?.trim() ?? "";
+      const res = await fetch("/api/params/bayesian-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventA: fromLabel,
+          eventB: toLabel,
+          currentProbability: edge.params.probability,
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.updated) setResult(data);
+    } catch (err) {
+      console.error("베이지안 업데이트 실패:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyUpdate = () => {
+    if (!result) return;
+    const store = useCausalStore.getState();
+    store.updateEdgeParams(edge.id, { probability: result.posterior });
+    setResult(null);
+  };
+
+  return (
+    <div className="space-y-2">
+      <button
+        onClick={handleUpdate}
+        disabled={loading}
+        className="w-full rounded border border-accent/40 bg-accent/10 py-1.5 text-[11px] text-accent hover:bg-accent/20 transition-colors disabled:opacity-50"
+      >
+        {loading ? "뉴스 검색 중..." : "뉴스로 확률 업데이트"}
+      </button>
+
+      {result && (
+        <div className="rounded border border-border bg-card p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-dim">현재</span>
+            <span className="font-mono text-xs text-soft">{result.prior}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-dim">업데이트</span>
+            <span
+              className="font-mono text-xs font-bold"
+              style={{
+                color: result.posterior > result.prior ? "var(--green)" : "var(--red)",
+              }}
+            >
+              {result.posterior}
+            </span>
+          </div>
+          {result.evidences.slice(0, 3).map((ev, i) => (
+            <div key={i} className="text-[9px] text-dim leading-relaxed">
+              LR={ev.lr}: {ev.reasoning.slice(0, 80)}
+            </div>
+          ))}
+          {result.needsConfirmation && (
+            <p className="text-[10px] text-yellow">
+              변화폭이 큽니다 ({(result.delta * 100).toFixed(0)}%p)
+            </p>
+          )}
+          <div className="flex gap-2">
+            <button onClick={applyUpdate} className="flex-1 rounded bg-accent py-1 text-[10px] font-bold text-background">
+              적용
+            </button>
+            <button onClick={() => setResult(null)} className="flex-1 rounded border border-border py-1 text-[10px] text-dim">
+              취소
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const EDGE_TYPE_LABEL: Record<EdgeType, string> = {
   "event-numeric": "Event \u2192 Numeric",
@@ -168,6 +262,11 @@ export default function EdgeDetail() {
             관련 데이터를 찾아 분석 후 입력해주세요.
           </p>
         </div>
+      )}
+
+      {/* 베이지안 업데이트 버튼 (event-event 엣지만) */}
+      {edge.edgeType === "event-event" && edge.params.probability != null && (
+        <BayesianUpdateButton edge={edge} />
       )}
 
       {/* 재추정 버튼 */}

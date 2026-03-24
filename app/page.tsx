@@ -7,6 +7,7 @@ import ThreePanel from "@/components/layout/ThreePanel";
 import CausalGraph from "@/components/graph/CausalGraph";
 import DetailPanel from "@/components/detail/DetailPanel";
 import TopicInput from "@/components/news/TopicInput";
+import NewsPanel from "@/components/news/NewsPanel";
 import ChainList from "@/components/summary/ChainList";
 import ImpactSummary from "@/components/summary/ImpactSummary";
 import Legend from "@/components/summary/Legend";
@@ -111,6 +112,7 @@ export default function Home() {
               onSubmit={handleTopicSubmit}
               isLoading={isGenerating}
             />
+            <NewsPanel />
             {isEstimating && (
               <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
                 <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />

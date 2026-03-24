@@ -71,8 +71,8 @@
 ### 3.1 Tavily 뉴스 검색
 - [x] `lib/api/tavily.ts` — searchNews, searchMultiQuery, newsToSummaryText, newsToHintText
 - [x] `app/api/news/route.ts` — 뉴스 검색 API Route
-- [ ] `components/news/NewsPanel.tsx` — 뉴스 피드 패널 ❌ 미구현
-- [ ] `components/news/NewsCard.tsx` — 개별 뉴스 카드 ❌ 미구현
+- [x] `components/news/NewsPanel.tsx` — 뉴스 피드 패널 (검색+선택) ✅
+- [x] `components/news/NewsCard.tsx` — 개별 뉴스 카드 (선택 토글) ✅
 - [x] `components/news/TopicInput.tsx` — 주제 직접 입력 폼
 
 ### 3.2 LLM 인과 체인 생성 (4단계 파이프라인)
@@ -81,7 +81,7 @@
 - [x] `app/api/chain/generate/route.ts` — 4단계 파이프라인 오케스트레이션
 - [x] 응답 파싱 + 고유 노드/엣지 ID 보장
 - [x] 생성 중 로딩 UI ("생성 중..." 버튼)
-- [ ] 생성 중 단계별 진행 상태 표시 (Step 1/4...) ❌ 미구현
+- [ ] 생성 중 단계별 진행 상태 표시 (Step 1/4...) ❌ (후순위)
 
 ### 3.3 체인 → 그래프 변환
 - [x] CausalChain[] → React Flow 노드/엣지 변환
@@ -139,8 +139,8 @@
 - [x] 체인 목록 호버 → 그래프 하이라이트
 - [x] 엣지 클릭 → 상세 패널
 - [x] 그래프 미니맵
-- [ ] 엣지 호버 → 파라미터 툴팁 ❌
-- [ ] 노드 클릭 → 관련 엣지 표시 ❌
+- [ ] 엣지 호버 → 파라미터 툴팁 ❌ (후순위)
+- [ ] 노드 클릭 → 관련 엣지 표시 ❌ (후순위)
 
 ### 5.3 상태 처리
 - [x] 생성 중 로딩 ("생성 중..." 버튼)
@@ -149,7 +149,7 @@
 
 ### 5.4 포매팅
 - [x] `lib/utils/format.ts` — 숫자 포맷
-- [ ] 반응형 레이아웃 (최소 1280px) ❌
+- [x] 반응형 레이아웃 (사이드패널 토글) ✅
 
 ---
 

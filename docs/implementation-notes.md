@@ -90,6 +90,26 @@
 
 ---
 
+## 베이지안 업데이트 — ✅ 구현 완료
+
+### 구현 파일
+- `lib/prompts/bayesian-update.ts` — 우도비 추정 프롬프트 + 수학 함수
+- `app/api/params/bayesian-update/route.ts` — 베이지안 업데이트 API
+- `components/detail/EdgeDetail.tsx` — "뉴스로 확률 업데이트" 버튼
+
+### 파이프라인 (수동 트리거)
+1. 사용자가 event-event 엣지 상세에서 "뉴스로 확률 업데이트" 클릭
+2. Tavily로 최근 관련 뉴스 검색 (5건)
+3. Haiku가 각 뉴스의 우도비(LR) 추정
+4. 순차 베이지안 업데이트: P_new = (P_old × LR) / (P_old × LR + 1-P_old)
+5. 변화 >15%p → 사용자 확인 UI ("적용/취소")
+
+### 수학
+- bayesianUpdate(prior, lr) = (prior × lr) / (prior × lr + (1-prior))
+- 클램핑: 0.02 ≤ P ≤ 0.98
+
+---
+
 ## 공통: 추정 불가 시 처리
 
 ### 원칙
