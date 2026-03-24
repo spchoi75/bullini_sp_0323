@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callClaude } from "@/lib/api/claude";
 import { getFredSeries } from "@/lib/api/fred";
+import { getECOSSeries } from "@/lib/api/ecos";
+import { getWorldBankIndicator } from "@/lib/api/worldbank";
 import { searchNews } from "@/lib/api/tavily";
 import {
   DATA_IDENTIFY_SYSTEM,
@@ -41,31 +43,97 @@ function parseJson(text: string): Record<string, unknown> {
 }
 
 // ============================================================
-// Tier 1: FRED 시계열로 통계 계산
+// Tier 1: 범용 시계열 데이터 수집 + Python 통계 계산
+// 소스 타입에 따라 FRED / ECOS / Yahoo Finance / World Bank 분기
 // ============================================================
-async function estimateWithFred(
-  xSeriesId: string,
-  ySeriesId: string,
-  xSourceUrl: string,
-  ySourceUrl: string
+
+async function fetchTimeSeries(
+  source: Record<string, unknown>
+): Promise<{ values: number[]; label: string; url: string } | null> {
+  try {
+    const type = source.type as string;
+
+    if (type === "fred") {
+      const seriesId = source.seriesId as string;
+      const data = await getFredSeries(seriesId, "2010-01-01");
+      if (data.length < 20) return null;
+      return {
+        values: data.map((d) => parseFloat(d.value)),
+        label: `FRED ${seriesId}`,
+        url: (source.sourceUrl as string) ?? `https://fred.stlouisfed.org/series/${seriesId}`,
+      };
+    }
+
+    if (type === "ecos") {
+      const statCode = source.statCode as string;
+      const itemCode1 = source.itemCode1 as string;
+      const data = await getECOSSeries(statCode, itemCode1, "M", "201001", "202612");
+      if (data.length < 20) return null;
+      return {
+        values: data.map((d) => d.value),
+        label: `ECOS ${statCode}`,
+        url: (source.sourceUrl as string) ?? "https://ecos.bok.or.kr",
+      };
+    }
+
+    if (type === "yahoo") {
+      const symbol = source.symbol as string;
+      const res = await fetch(`${PYTHON_STATS_URL}/data/yahoo-finance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol, period: "5y", interval: "1mo" }),
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (Array.isArray(data) && data.length >= 20) {
+        return {
+          values: data.map((d: { close: number }) => d.close),
+          label: `Yahoo ${symbol}`,
+          url: `https://finance.yahoo.com/quote/${symbol}`,
+        };
+      }
+      return null;
+    }
+
+    if (type === "worldbank") {
+      const indicator = source.indicator as string;
+      const country = (source.country as string) ?? "KR";
+      const data = await getWorldBankIndicator(country, indicator, 2005, 2025);
+      if (data.length < 10) return null;
+      return {
+        values: data.filter((d) => d.value != null).map((d) => d.value!),
+        label: `World Bank ${indicator} (${country})`,
+        url: `https://data.worldbank.org/indicator/${indicator}?locations=${country}`,
+      };
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function estimateWithTimeSeries(
+  xSource: Record<string, unknown>,
+  ySource: Record<string, unknown>
 ) {
   const [xData, yData] = await Promise.all([
-    getFredSeries(xSeriesId, "2010-01-01"),
-    getFredSeries(ySeriesId, "2010-01-01"),
+    fetchTimeSeries(xSource),
+    fetchTimeSeries(ySource),
   ]);
 
-  if (xData.length < 30 || yData.length < 30) return null;
+  if (!xData || !yData) return null;
 
-  const xValues = xData.map((d) => parseFloat(d.value));
-  const yValues = yData.map((d) => parseFloat(d.value));
-  const minLen = Math.min(xValues.length, yValues.length);
+  const minLen = Math.min(xData.values.length, yData.values.length);
+  if (minLen < 20) return null;
 
   const res = await fetch(`${PYTHON_STATS_URL}/compute/numeric-to-numeric`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      x_series: xValues.slice(0, minLen),
-      y_series: yValues.slice(0, minLen),
+      x_series: xData.values.slice(0, minLen),
+      y_series: yData.values.slice(0, minLen),
       frequency: "monthly",
       max_lag: 24,
     }),
@@ -75,6 +143,8 @@ async function estimateWithFred(
   if (!res.ok) return null;
   const stats = await res.json();
 
+  const srcType = `${(xSource.type as string).toUpperCase()}↔${(ySource.type as string).toUpperCase()}`;
+
   return {
     params: {
       beta: stats.beta,
@@ -82,15 +152,15 @@ async function estimateWithFred(
       p: stats.p_value,
     },
     paramMeta: {
-      beta: { status: "auto", method: `FRED OLS 회귀 (lag=${stats.optimal_lag}, n=${stats.n_obs})` },
-      r: { status: "auto", method: `Pearson 상관계수 (${stats.transform})` },
-      p: { status: "auto", method: `t-test p-value` },
+      beta: { status: "auto" as const, method: `${srcType} OLS 회귀 (lag=${stats.optimal_lag}, n=${stats.n_obs})` },
+      r: { status: "auto" as const, method: `Pearson 상관계수 (${stats.transform})` },
+      p: { status: "auto" as const, method: `t-test p-value` },
     },
-    rationale: `FRED 시계열 ${xSeriesId}↔${ySeriesId} 대상 OLS 회귀분석. 최적 시차 ${stats.optimal_lag}개월, 관측치 ${stats.n_obs}개. 변환: ${stats.transform}. Granger p=${stats.granger_p?.toFixed(4) ?? "N/A"}.`,
+    rationale: `${xData.label}↔${yData.label} 대상 OLS 회귀분석. 최적 시차 ${stats.optimal_lag}개월, 관측치 ${stats.n_obs}개. 변환: ${stats.transform}. Granger p=${stats.granger_p?.toFixed(4) ?? "N/A"}.`,
     confidence: stats.confidence,
     sources: [
-      { label: `FRED - ${xSeriesId}`, url: xSourceUrl, type: "data" as const },
-      { label: `FRED - ${ySeriesId}`, url: ySourceUrl, type: "data" as const },
+      { label: xData.label, url: xData.url, type: "data" as const },
+      { label: yData.label, url: yData.url, type: "data" as const },
     ],
   };
 }
@@ -578,14 +648,15 @@ export async function POST(req: NextRequest) {
 
     // ======== numeric-numeric ========
     if (edge.edgeType === "numeric-numeric") {
-      // Tier 1: FRED 시계열 통계
-      if (xTier === 1 && yTier === 1 && xSource?.type === "fred" && ySource?.type === "fred") {
-        const result = await estimateWithFred(
-          xSource.seriesId as string,
-          ySource.seriesId as string,
-          (xSource.sourceUrl as string) ?? "",
-          (ySource.sourceUrl as string) ?? ""
-        );
+      // Tier 1: 시계열 데이터 기반 통계 계산 (FRED / ECOS / Yahoo / World Bank)
+      if (xTier === 1 && yTier === 1 && xSource && ySource) {
+        const result = await estimateWithTimeSeries(xSource, ySource);
+        if (result) return NextResponse.json(result);
+      }
+
+      // X만 또는 Y만 Tier 1인 경우에도 시도 (한쪽이 다른 소스일 수 있음)
+      if (xSource && ySource && (xTier === 1 || yTier === 1)) {
+        const result = await estimateWithTimeSeries(xSource, ySource);
         if (result) return NextResponse.json(result);
       }
 

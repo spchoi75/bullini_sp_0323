@@ -77,6 +77,24 @@ Tier 1,2에서 찾지 못할 때만:
 }
 \`\`\`
 
+ECOS 예시:
+\`\`\`json
+{
+  "x_source": { "tier": 1, "type": "ecos", "statCode": "722Y001", "itemCode1": "0101000", "sourceUrl": "https://ecos.bok.or.kr", "sourceName": "ECOS - 기준금리" },
+  "y_source": { "tier": 1, "type": "ecos", "statCode": "731Y003", "itemCode1": "0000001", "sourceUrl": "https://ecos.bok.or.kr", "sourceName": "ECOS - 원달러환율" },
+  "bestSourceUrl": "https://ecos.bok.or.kr", "bestSourceName": "한국은행 경제통계", "available": true, "searchQuery": null
+}
+\`\`\`
+
+Yahoo Finance 예시:
+\`\`\`json
+{
+  "x_source": { "tier": 1, "type": "yahoo", "symbol": "NVDA", "sourceUrl": "https://finance.yahoo.com/quote/NVDA", "sourceName": "NVDA 주가" },
+  "y_source": { "tier": 1, "type": "yahoo", "symbol": "SOXX", "sourceUrl": "https://finance.yahoo.com/quote/SOXX", "sourceName": "SOXX 반도체ETF" },
+  "bestSourceUrl": "https://finance.yahoo.com", "bestSourceName": "Yahoo Finance", "available": true, "searchQuery": null
+}
+\`\`\`
+
 type이 "unavailable"이면:
 \`\`\`json
 {
