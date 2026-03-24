@@ -11,7 +11,7 @@ export default function ThreePanel({ left, center }: TwoPanelProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className="flex h-full w-full" style={{ marginTop: 40 }}>
+    <div className="flex h-full w-full mt-[40px]">
       {/* 사이드패널 토글 (좁은 화면용) */}
       {!sidebarOpen && (
         <button
@@ -25,8 +25,7 @@ export default function ThreePanel({ left, center }: TwoPanelProps) {
       {/* Left panel */}
       {sidebarOpen && (
         <aside
-          className="relative w-[340px] min-w-[340px] overflow-y-auto border-r border-border"
-          style={{ backgroundColor: "var(--panel)" }}
+          className="relative w-[340px] min-w-[340px] overflow-y-auto border-r border-border bg-panel"
         >
           <button
             onClick={() => setSidebarOpen(false)}
@@ -40,8 +39,7 @@ export default function ThreePanel({ left, center }: TwoPanelProps) {
 
       {/* Center — 그래프 */}
       <main
-        className="flex-1 overflow-hidden"
-        style={{ backgroundColor: "var(--background)", minWidth: 0 }}
+        className="flex-1 overflow-hidden bg-background min-w-0"
       >
         {center}
       </main>

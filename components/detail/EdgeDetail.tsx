@@ -106,10 +106,10 @@ const EDGE_TYPE_LABEL: Record<EdgeType, string> = {
 };
 
 const EDGE_TYPE_COLOR: Record<EdgeType, string> = {
-  "event-numeric": "#7eb8d0",
-  "numeric-numeric": "#5eaba2",
-  "event-event": "#9b8ec4",
-  "numeric-event": "#d4975a",
+  "event-numeric": "var(--chain-1)",
+  "numeric-numeric": "var(--chain-2)",
+  "event-event": "var(--chain-3)",
+  "numeric-event": "var(--chain-5)",
 };
 
 const CONFIDENCE_LABEL: Record<Confidence, string> = {

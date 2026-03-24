@@ -179,9 +179,9 @@ export default function CausalGraph() {
         <svg>
           <defs>
             {[
-              { id: "marker-high", color: "#6fcf97" },
-              { id: "marker-medium", color: "#f2c94c" },
-              { id: "marker-low", color: "#eb5757" },
+              { id: "marker-high", color: "var(--green)" },
+              { id: "marker-medium", color: "var(--yellow)" },
+              { id: "marker-low", color: "var(--red)" },
             ].map(({ id, color }) => (
               <marker key={id} id={id} markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
                 <path d="M0,0 L8,3 L0,6 Z" fill={color} />
@@ -193,7 +193,7 @@ export default function CausalGraph() {
           variant={BackgroundVariant.Dots}
           gap={20}
           size={0.8}
-          color="#1a1e28"
+          color="var(--tooltip-bg)"
         />
         <Controls
           showInteractive={false}

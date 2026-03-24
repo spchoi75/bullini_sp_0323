@@ -41,7 +41,7 @@ function EventNode({ data }: NodeProps) {
             style={{
               fontSize: "11px",
               fontWeight: i === 0 ? 700 : 500,
-              color: i === 0 ? "#e8eaef" : "#a0a4b0",
+              color: i === 0 ? "var(--foreground)" : "var(--foreground-light)",
             }}
           >
             {line}

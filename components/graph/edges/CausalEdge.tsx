@@ -10,9 +10,9 @@ import type { EdgeProps } from "@xyflow/react";
 import type { EdgeParams, Confidence } from "@/lib/types/causal";
 
 const CONFIDENCE_COLOR: Record<Confidence, string> = {
-  high: "#6fcf97",
-  medium: "#f2c94c",
-  low: "#eb5757",
+  high: "var(--green)",
+  medium: "var(--yellow)",
+  low: "var(--red)",
 };
 
 function getMainParam(edgeType: string, params: Partial<EdgeParams>): number | null {
@@ -155,7 +155,7 @@ function CausalEdgeComponent({
                 fontSize: "10px",
                 fontFamily: "'Geist Mono', monospace",
                 fontWeight: 700,
-                color: isNull ? "#8a7a50" : strokeColor,
+                color: isNull ? "var(--null-param)" : strokeColor,
                 whiteSpace: "nowrap",
               }}
             >
@@ -173,7 +173,7 @@ function CausalEdgeComponent({
                 fontSize: "9px",
                 fontFamily: "'Geist Mono', monospace",
                 fontWeight: 500,
-                color: "#7a7e8c",
+                color: "var(--dim)",
                 whiteSpace: "nowrap",
               }}
             >
@@ -191,12 +191,12 @@ function CausalEdgeComponent({
             style={{
               position: "absolute",
               transform: `translate(-50%, -100%) translate(${labelX}px, ${labelY - 24}px)`,
-              backgroundColor: "#1a1e28",
-              border: "1px solid #2a2f3a",
+              backgroundColor: "var(--tooltip-bg)",
+              border: "1px solid var(--tooltip-border)",
               borderRadius: "6px",
               padding: "6px 10px",
               fontSize: "9px",
-              color: "#cdd0d8",
+              color: "var(--foreground)",
               whiteSpace: "nowrap",
               zIndex: 50,
               boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
@@ -206,7 +206,7 @@ function CausalEdgeComponent({
               {edgeTypeName(edgeType)}
             </div>
             <div>{topLabel}{bottomLabel ? ` · ${bottomLabel}` : ""}</div>
-            {timeLag > 0 && <div style={{ color: "#5e6274" }}>지연: {timeLag}년</div>}
+            {timeLag > 0 && <div style={{ color: "var(--dim)" }}>지연: {timeLag}년</div>}
           </div>
         </EdgeLabelRenderer>
       )}

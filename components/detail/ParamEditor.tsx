@@ -81,7 +81,7 @@ export default function ParamEditor({
             <div key={field.key}>
               <div
                 className={`flex items-center justify-between rounded px-3 py-2 ${
-                  isNull ? "bg-yellow/10 border border-yellow/30" : "bg-card"
+                  isNull ? "bg-yellow/10 border border-yellow/30" : "bg-card animate-param-flash"
                 }`}
               >
                 <span className="text-xs text-soft">

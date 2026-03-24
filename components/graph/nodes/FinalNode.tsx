@@ -17,7 +17,7 @@ function FinalNode({ data }: NodeProps) {
         padding: "6px 10px",
         borderRadius: "6px",
         border: "2px solid var(--accent)",
-        backgroundColor: "#1f3330",
+        backgroundColor: "var(--final-node-bg)",
         boxShadow: "0 0 16px rgba(94,171,162,0.2)",
       }}
     >
@@ -29,7 +29,7 @@ function FinalNode({ data }: NodeProps) {
       />
 
       <div className="flex flex-col items-center gap-1">
-        <span style={{ fontSize: "9px", fontWeight: 700, color: "#5eaba2" }}>
+        <span style={{ fontSize: "9px", fontWeight: 700, color: "var(--primary)" }}>
           {label}
         </span>
         {totalImpact !== null && totalImpact !== undefined ? (

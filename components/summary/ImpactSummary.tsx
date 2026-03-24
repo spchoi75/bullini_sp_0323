@@ -29,17 +29,11 @@ export default function ImpactSummary() {
           <button
             key={f.label}
             onClick={() => setTimeFilter(f.value)}
-            className="rounded px-2 py-0.5 text-[9px] font-medium transition-colors"
-            style={{
-              backgroundColor:
-                timeFilter === f.value ? "var(--accent)" : "transparent",
-              color:
-                timeFilter === f.value ? "var(--background)" : "var(--dim)",
-              border:
-                timeFilter === f.value
-                  ? "none"
-                  : "1px solid var(--border)",
-            }}
+            className={`rounded px-2 py-0.5 text-[9px] font-medium transition-colors ${
+              timeFilter === f.value
+                ? "bg-accent text-background"
+                : "border border-border text-dim hover:text-foreground"
+            }`}
           >
             {f.label}
           </button>
@@ -51,15 +45,13 @@ export default function ImpactSummary() {
         <span className="text-xs font-bold text-foreground">합산 영향</span>
         {agg.totalImpact !== null ? (
           <span
-            className="font-mono text-sm font-extrabold"
-            style={{
-              color:
-                agg.totalImpact > 0
-                  ? "var(--green)"
-                  : agg.totalImpact < 0
-                    ? "var(--red)"
-                    : "var(--dim)",
-            }}
+            className={`font-mono text-sm font-extrabold ${
+              agg.totalImpact > 0
+                ? "text-up"
+                : agg.totalImpact < 0
+                  ? "text-down"
+                  : "text-dim"
+            }`}
           >
             {agg.totalImpact > 0 ? "+" : ""}
             {agg.totalImpact.toFixed(2)}%

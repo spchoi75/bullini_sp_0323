@@ -28,7 +28,7 @@ export default function ChainList() {
         return (
           <div
             key={chain.id}
-            className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition-opacity hover:bg-white/5"
+            className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition-opacity hover:bg-white/5 animate-chain-slide"
             style={{ opacity: dimmed ? 0.3 : 1 }}
             onMouseEnter={() => hoverChain(chain.id)}
             onMouseLeave={() => hoverChain(null)}
