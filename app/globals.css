@@ -8,8 +8,8 @@
   --card: oklch(1 0 0);
   --panel: #12151b;
   --border: oklch(0.922 0 0);
-  --soft: #a0a4b0;
-  --dim: #5e6274;
+  --soft: #b8bcc8;
+  --dim: #7a7e90;
   --accent: oklch(0.97 0 0);
   --green: #6fcf97;
   --yellow: #f2c94c;
@@ -159,7 +159,7 @@
 .dark {
   /* Bullini 커스텀 다크 테마 */
   --background: #0f1115;
-  --foreground: #cdd0d8;
+  --foreground: #e4e6ec;
   --card: #181c24;
   --card-foreground: #cdd0d8;
   --panel: #12151b;
@@ -177,8 +177,8 @@
   --border: #242936;
   --input: #242936;
   --ring: #5eaba2;
-  --soft: #a0a4b0;
-  --dim: #5e6274;
+  --soft: #b8bcc8;
+  --dim: #7a7e90;
   --green: #6fcf97;
   --yellow: #f2c94c;
   --red: #eb5757;

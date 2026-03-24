@@ -155,7 +155,7 @@ function CausalEdgeComponent({
                 fontSize: "10px",
                 fontFamily: "'Geist Mono', monospace",
                 fontWeight: 700,
-                color: isNull ? "var(--null-param)" : strokeColor,
+                color: isNull ? "#c0a860" : "#e8ecf0",
                 whiteSpace: "nowrap",
               }}
             >
@@ -173,7 +173,7 @@ function CausalEdgeComponent({
                 fontSize: "9px",
                 fontFamily: "'Geist Mono', monospace",
                 fontWeight: 500,
-                color: "var(--dim)",
+                color: "#9a9eb0",
                 whiteSpace: "nowrap",
               }}
             >

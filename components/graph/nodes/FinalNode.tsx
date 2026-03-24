@@ -29,7 +29,7 @@ function FinalNode({ data }: NodeProps) {
       />
 
       <div className="flex flex-col items-center gap-1">
-        <span style={{ fontSize: "9px", fontWeight: 700, color: "var(--primary)" }}>
+        <span style={{ fontSize: "9px", fontWeight: 700, color: "#7fd4cb" }}>
           {label}
         </span>
         {totalImpact !== null && totalImpact !== undefined ? (

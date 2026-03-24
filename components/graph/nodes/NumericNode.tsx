@@ -16,7 +16,7 @@ function NumericNode({ data }: NodeProps) {
         minWidth: 120,
         maxWidth: 150,
         padding: "4px 10px",
-        backgroundColor: "var(--node-bg)",
+        backgroundColor: "#2a3145",
         border: `1px solid ${chainColor}60`,
         borderRadius: "3px",
         boxShadow: `0 0 8px ${chainColor}15`,
@@ -37,7 +37,7 @@ function NumericNode({ data }: NodeProps) {
             style={{
               fontSize: "11px",
               fontWeight: i === 0 ? 600 : 400,
-              color: i === 0 ? "var(--foreground)" : "var(--dim)",
+              color: i === 0 ? "#ffffff" : "#b0b4c0",
               fontFamily: i > 0 ? "'Geist Mono', monospace" : undefined,
             }}
           >
