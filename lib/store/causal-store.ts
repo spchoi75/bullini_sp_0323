@@ -18,6 +18,7 @@ interface CausalState {
   hoveredChainId: string | null;
   isGenerating: boolean;
   isEstimating: boolean;
+  generationStep: string | null; // "Step 1/4: X→Y 뉴스 검색 중..."
 
   // --- 뉴스 ---
   newsArticles: NewsArticle[];
@@ -41,6 +42,7 @@ interface CausalState {
   hoverChain: (chainId: string | null) => void;
   setGenerating: (v: boolean) => void;
   setEstimating: (v: boolean) => void;
+  setGenerationStep: (step: string | null) => void;
 
   // --- 액션: 뉴스 ---
   setNewsArticles: (articles: NewsArticle[]) => void;
@@ -63,6 +65,7 @@ export const useCausalStore = create<CausalState>((set, get) => ({
   hoveredChainId: null,
   isGenerating: false,
   isEstimating: false,
+  generationStep: null,
   newsArticles: [],
   selectedArticles: [],
   chainImpacts: [],
@@ -147,8 +150,9 @@ export const useCausalStore = create<CausalState>((set, get) => ({
   // --- UI ---
   selectEdge: (edgeId) => set({ selectedEdgeId: edgeId }),
   hoverChain: (chainId) => set({ hoveredChainId: chainId }),
-  setGenerating: (v) => set({ isGenerating: v }),
+  setGenerating: (v) => set({ isGenerating: v, generationStep: v ? null : null }),
   setEstimating: (v) => set({ isEstimating: v }),
+  setGenerationStep: (step) => set({ generationStep: step }),
 
   // --- 뉴스 ---
   setNewsArticles: (articles) => set({ newsArticles: articles }),

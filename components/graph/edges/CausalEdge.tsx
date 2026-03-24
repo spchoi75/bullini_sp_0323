@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState } from "react";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -62,6 +62,16 @@ function hasNullParams(edgeType: string, params: Partial<EdgeParams>): boolean {
   }
 }
 
+function edgeTypeName(t: string): string {
+  const m: Record<string, string> = {
+    "event-numeric": "Event→Numeric",
+    "numeric-numeric": "Numeric→Numeric",
+    "event-event": "Event→Event",
+    "numeric-event": "Numeric→Event",
+  };
+  return m[t] ?? t;
+}
+
 function CausalEdgeComponent({
   id,
   sourceX,
@@ -73,6 +83,7 @@ function CausalEdgeComponent({
   data,
   selected,
 }: EdgeProps) {
+  const [hovered, setHovered] = useState(false);
   const edgeType = (data?.edgeType as string) ?? "numeric-numeric";
   const params = (data?.params as Partial<EdgeParams>) ?? {};
   const confidence = (data?.confidence as Confidence) ?? "medium";
@@ -104,10 +115,20 @@ function CausalEdgeComponent({
   const bottomLabel = isFinalConnector ? "" : formatBottomLabel(edgeType, params);
   const isNull = isDashed && !isFinalConnector;
 
+  const timeLag = (data?.timeLag as number) ?? 0;
+
   return (
     <>
-      {/* 클릭 히트 영역 */}
-      <path d={edgePath} fill="none" stroke="transparent" strokeWidth={18} className="react-flow__edge-interaction" />
+      {/* 클릭+호버 히트 영역 */}
+      <path
+        d={edgePath}
+        fill="none"
+        stroke="transparent"
+        strokeWidth={18}
+        className="react-flow__edge-interaction"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      />
 
       <BaseEdge
         id={id}
@@ -159,6 +180,34 @@ function CausalEdgeComponent({
               {bottomLabel}
             </div>
           )}
+        </EdgeLabelRenderer>
+      )}
+
+      {/* 호버 툴팁 */}
+      {hovered && !isFinalConnector && (
+        <EdgeLabelRenderer>
+          <div
+            className="nodrag nopan pointer-events-none"
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, -100%) translate(${labelX}px, ${labelY - 24}px)`,
+              backgroundColor: "#1a1e28",
+              border: "1px solid #2a2f3a",
+              borderRadius: "6px",
+              padding: "6px 10px",
+              fontSize: "9px",
+              color: "#cdd0d8",
+              whiteSpace: "nowrap",
+              zIndex: 50,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+            }}
+          >
+            <div style={{ fontWeight: 700, marginBottom: 2, color: strokeColor }}>
+              {edgeTypeName(edgeType)}
+            </div>
+            <div>{topLabel}{bottomLabel ? ` · ${bottomLabel}` : ""}</div>
+            {timeLag > 0 && <div style={{ color: "#5e6274" }}>지연: {timeLag}년</div>}
+          </div>
         </EdgeLabelRenderer>
       )}
     </>

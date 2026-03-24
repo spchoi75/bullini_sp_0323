@@ -4,6 +4,8 @@ import { useCausalStore } from "@/lib/store/causal-store";
 
 export default function Header() {
   const project = useCausalStore((s) => s.project);
+  const isGenerating = useCausalStore((s) => s.isGenerating);
+  const generationStep = useCausalStore((s) => s.generationStep);
   const isEstimating = useCausalStore((s) => s.isEstimating);
   const getNullParamCount = useCausalStore((s) => s.getNullParamCount);
   const nullCount = getNullParamCount();
@@ -26,6 +28,12 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-2">
+        {isGenerating && generationStep && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-2.5 py-0.5 text-[10px] font-medium text-accent">
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+            {generationStep}
+          </span>
+        )}
         {isEstimating && (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-2.5 py-0.5 text-[10px] font-medium text-accent">
             <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />

@@ -64,15 +64,28 @@ export default function Home() {
     [setEstimating, updateEdge]
   );
 
+  const setGenerationStep = useCausalStore((s) => s.setGenerationStep);
+
   const handleTopicSubmit = useCallback(
     async (topic: string) => {
       setGenerating(true);
+      setGenerationStep("Step 1/4: 주제 분석 + 뉴스 검색 중...");
       try {
+        // 단계 진행 시뮬레이션 (API 내부에서 4단계 실행)
+        const stepTimer = setTimeout(() => setGenerationStep("Step 2/4: X→Y 경제학적 분해 중..."), 8000);
+        const stepTimer2 = setTimeout(() => setGenerationStep("Step 3/4: 다양한 원인 발굴 중..."), 25000);
+        const stepTimer3 = setTimeout(() => setGenerationStep("Step 4/4: 체인 통합 검증 중..."), 55000);
+
         const res = await fetch("/api/chain/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ topic, articles: [] }),
         });
+
+        clearTimeout(stepTimer);
+        clearTimeout(stepTimer2);
+        clearTimeout(stepTimer3);
+
         if (!res.ok) throw new Error(`API error: ${res.status}`);
         const data = await res.json();
 
@@ -97,9 +110,10 @@ export default function Home() {
         );
       } finally {
         setGenerating(false);
+        setGenerationStep(null);
       }
     },
-    [setProject, setGenerating, runAutoEstimate]
+    [setProject, setGenerating, setGenerationStep, runAutoEstimate]
   );
 
   return (

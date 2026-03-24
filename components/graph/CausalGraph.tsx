@@ -117,6 +117,18 @@ export default function CausalGraph() {
     [selectEdge]
   );
 
+  // 노드 클릭 → 해당 노드가 source인 첫 번째 엣지 선택
+  const onNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      if (node.id === "__final__") return;
+      const relatedEdge = edges.find(
+        (e) => e.source === node.id || e.target === node.id
+      );
+      if (relatedEdge) selectEdge(relatedEdge.id);
+    },
+    [edges, selectEdge]
+  );
+
   const onNodeMouseEnter: NodeMouseHandler = useCallback(
     (_event, node) => {
       const chainId = node.data?.chainId as string | undefined;
@@ -150,6 +162,7 @@ export default function CausalGraph() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onEdgeClick={onEdgeClick}
+        onNodeClick={onNodeClick}
         onNodeMouseEnter={onNodeMouseEnter}
         onNodeMouseLeave={onNodeMouseLeave}
         nodeTypes={nodeTypes}
