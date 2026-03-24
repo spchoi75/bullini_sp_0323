@@ -463,12 +463,15 @@ async function estimateWithLlmFallback(edge: CausalEdge) {
 
 ## ${paramGuide[edge.edgeType] ?? ""}
 
-## 규칙
-1. 경제학 연구, 실증 분석, 업계 통계 등의 근거가 있으면 구체적 수치를 제시
-2. 근거를 찾을 수 없으면 반드시 null (절대 지어내지 마세요)
-3. null인 경우 대략적인 추정 범위(estimatedRange)만 제시
-4. numeric-numeric의 경우: beta, r, p를 모두 추정 시도. beta만이라도 추정 가능하면 제시
-5. 근거 자료 URL은 실제 존재하는 것만
+## 규칙 (중요: 경제학적 추론은 허용)
+1. 실증 데이터, 연구 논문, 업계 통계가 있으면 → 구체적 수치 제시 (hasEvidence: true)
+2. 실증 데이터는 없지만 경제학적 논리로 추론 가능하면 → 추론값 제시 (hasEvidence: true)
+   예: "엔비디아 GPU 시장점유율 80%, 수요 1% 증가 시 매출 약 1.2~1.8% 증가" → β≈1.5 제시 가능
+   예: "금리 인상 → 기업 자금조달 비용 증가는 교과서적 관계" → β≈-0.3 제시 가능
+3. 경제학적 논리조차 없는 경우만 null (완전히 관계를 추론할 수 없을 때)
+4. **존재하지 않는 연구/논문을 지어내는 것만 금지** — 경제학적 추론 자체는 금지가 아님
+5. numeric-numeric: beta는 거의 항상 추론 가능 (방향+크기). r은 추론 어려우면 null, p도 null 가능
+6. 근거 자료 URL은 실제 존재하는 것만
 
 JSON 출력: { "params": { ... }, "hasEvidence": true|false, "rationale": "...", "estimatedRange": [low, high]|null, "sources": [{ "label": "...", "url": "...", "type": "research" }] }`;
 
@@ -487,7 +490,8 @@ JSON 출력: { "params": { ... }, "hasEvidence": true|false, "rationale": "...",
 
   const params = data.params ?? {};
 
-  if (data.hasEvidence && Object.values(params).some((v) => v != null)) {
+  // params에 값이 하나라도 있으면 채택 (hasEvidence 여부와 무관)
+  if (Object.values(params).some((v) => v != null)) {
     return {
       params,
       paramMeta: Object.fromEntries(
